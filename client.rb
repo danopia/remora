@@ -101,9 +101,15 @@ class Client
     }
   end
   
-  def get_stream_key song_id
+  # streamKey, streamServer, streamServerID
+  def get_stream_auth song_id
     data = request_more 'getStreamKeyFromSongID', {"songID" => song_id, "prefetch" => false}
-    # streamKey, streamServer, streamServerID
+    data['result']
+  end
+  
+  def play song_id
+    key = get_stream_auth song_id
+    MPlayer.play key['streamServer'], key['streamKey']
   end
 end
 end

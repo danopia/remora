@@ -22,8 +22,6 @@ album_id = results[index]['AlbumID']
 
 #client.enqueue(song_id, album_id)
 
-key = client.get_stream_key(song_id)['result']
-# streamKey, streamServer, streamServerID
 puts "calling play()"
-play key['streamServer'], key['streamKey']
+client.play song_id
 puts "play() terminated"
