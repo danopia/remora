@@ -20,7 +20,7 @@ Remora is designed to never store a byte of media to disk, streaming
 with it is about equal to streaming with the official Flash client.
 
 Either way, users of Remora should follow the official ToS (found
-[here](http://www.grooveshark.com/terms) to the letter. I am not yet
+[here](http://www.grooveshark.com/terms)) to the letter. I am not yet
 sure to what degree of legality Remora is at, though it is not in
 blatant violation of anything that I can find in the ToS. If there is
 anything that I missed, be welcome to contact me. Please E-mail me at
