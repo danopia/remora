@@ -54,8 +54,9 @@ def stream_from_http http, req, output
   end
   output.close_write
   puts "waiting for output to finish"
-  until output.closed?
+  until output.eof?
     sleep 1
   end
+  output.close
   puts "output is closed"
 end
