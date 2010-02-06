@@ -22,6 +22,7 @@ end
 
 require 'client'
 require 'mplayer'
+require 'ui'
 
 client = GrooveShark::Client.new
 $session = client.session
@@ -43,4 +44,18 @@ puts "Please type in a song index to [attempt to] play it:"
 index = gets.to_i
 
 client.queue << results[index]
-client.queue.play_radio
+Thread.new do
+  client.queue.play_radio
+end
+
+ui = Remora::UI.new client
+
+ui.cursor = false
+trap 'INT' do
+  ui.cursor = true
+end
+
+while true
+  ui.redraw
+  sleep 1
+end

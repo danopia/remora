@@ -4,8 +4,6 @@ class UI
   
   def initialize client
     @client = client
-    get_term_size
-    redraw
   end
   
   def get_term_size
@@ -27,7 +25,15 @@ class UI
 	end
   
   def redraw
+    get_term_size
     draw_frame 1,1, 30,10, 'Queue'
+    row = 2
+    @client.queue.songs.each_value do |song|
+      print color((@client.now_playing == song) ? '1;32' : '1;31')
+      place row, 2, "#{song['SongName'] || song['Name']} - #{song['ArtistName']} - #{song['AlbumName']}"
+      row += 1
+    end
+    $stdout.flush
   end
   
   def topbar width, text
@@ -57,9 +63,3 @@ class UI
 	end
 end
 end
-
-ui = Remora::UI.new nil
-ui.cursor = false
-ui.redraw
-sleep 5
-ui.cursor = true
