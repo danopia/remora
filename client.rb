@@ -1,4 +1,5 @@
 require 'json_sock'
+require 'queue'
 
 require 'digest/md5'
 require 'digest/sha1'
@@ -7,7 +8,7 @@ require 'open-uri'
 
 module GrooveShark
 class Client
-  attr_accessor :session, :comm_token, :queue, :now_playing
+  attr_accessor :session, :comm_token, :queue, :now_playing, :queue
   
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'
   CLIENT = 'gslite'
@@ -16,8 +17,7 @@ class Client
   def initialize session=nil
     @session = session || get_session
     @comm_token = get_comm_token
-    
-    init_queue
+    @queue = Queue.new self
   end
   
   def request page, method, parameters=nil
@@ -75,11 +75,6 @@ class Client
     plain = [method, @comm_token, 'theColorIsRed', rnd].join(':')
     hash = Digest::SHA1.hexdigest plain
     "#{rnd}#{hash}"
-  end
-  
-  
-  def init_queue
-    @queue = request_service 'initiateQueueEx'
   end
   
   def search type, query

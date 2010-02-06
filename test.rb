@@ -11,7 +11,7 @@ puts "Queue is #{client.queue}"
 run_dbus client
 
 puts "Searching for 'people are crazy':"
-results = client.search_songs('people are crazy')['Return']
+results = client.search_songs('honky tonk')['Return']
 results.each do |result|
   puts "#{results.index result} - #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
 end
