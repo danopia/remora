@@ -50,9 +50,8 @@ end
 
 ui = Remora::UI.new client
 
-ui.cursor = false
 trap 'INT' do
-  ui.cursor = true
+  ui.undo_modes
 end
 
 while true

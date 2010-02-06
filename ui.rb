@@ -4,11 +4,13 @@ class UI
   
   def initialize client
     @client = client
+    prepare_modes
   end
   
   def get_term_size
-    @width = `tput cols`.to_i - 1
-    @height = `tput lines`.to_i - 1
+    data = terminal_size
+    @width = data[1] - 1
+    @height = data[0] - 1
   end
   
 	def place row, col, text
@@ -26,13 +28,16 @@ class UI
   
   def redraw
     get_term_size
+    print "\e[H\e[J" # clear all and go home
     
     draw_frame 1, 1, 30, @height, 'Queue'
     row = 2
-    @client.queue.songs.each_value do |song|
-      print color((@client.now_playing == song) ? '1;32' : '1;31')
-      place row, 2, song['SongName'] || song['Name']
-      row += 1
+    if @client
+      @client.queue.songs.each_pair do |index, song|
+        print color((@client.now_playing == song) ? '1;32' : '1;31')
+        place row, 2, "#{index.to_s.rjust 2}. #{song['SongName'] || song['Name']}"
+        row += 1
+      end
     end
     
     $stdout.flush
@@ -63,5 +68,65 @@ class UI
 		
 		$stdout.flush
 	end
+  
+  
+  ######################################
+  # this is all copied from cashreg :P #
+  ######################################
+  
+	# yay grep
+	TIOCGWINSZ = 0x5413
+	TCGETS = 0x5401
+	TCSETS = 0x5402
+	ECHO   = 8 # 0000010
+	ICANON = 2 # 0000002
+
+	# thanks google for all of this
+	def terminal_size
+		rows, cols = 25, 80
+		buf = [0, 0, 0, 0].pack("SSSS")
+		if $stdout.ioctl(TIOCGWINSZ, buf) >= 0 then
+			rows, cols, row_pixels, col_pixels = buf.unpack("SSSS")
+		end
+		return [rows, cols]
+	end
+	
+	# had to convert these from C... fun
+	def prepare_modes
+		buf = [0, 0, 0, 0, 0, 0, ''].pack("IIIICCA*")
+		$stdout.ioctl(TCGETS, buf)
+		@old_modes = buf.unpack("IIIICCA*")
+		new_modes = @old_modes.clone
+		new_modes[3] &= ~ECHO # echo off
+		new_modes[3] &= ~ICANON # one char @ a time
+		$stdout.ioctl(TCSETS, new_modes.pack("IIIICCA*"))
+    self.cursor = false
+	end
+	def undo_modes # restore previous terminal mode
+		$stdout.ioctl(TCSETS, @old_modes.pack("IIIICCA*"))
+    print "\e[2J\e[H" # clear all and go home
+    self.cursor = true # show the mouse
+	end
 end
+end
+
+#~ puts "Enter a search query:"
+#~ query = gets.chomp
+#~ puts
+#~ puts "Searching for \"#{query}\":"
+#~ results = client.search_songs(query)['Return']
+#~ results.each do |result|
+  #~ puts "#{results.index result} - #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
+#~ end
+
+ui = Remora::UI.new nil
+
+trap 'INT' do
+  ui.undo_modes
+  exit
+end
+
+while true
+  ui.redraw
+  sleep 1
 end
