@@ -1,6 +1,8 @@
 class MPlayer
   include DRbUndumped
-  attr_accessor :stream, :length, :position, :length2, :position2
+  attr_reader :stream, :state, :total_size, :streamed_size
+  attr_reader :position, :position_str, :length, :length_str
+  
   def self.play server, key
     url = "http://#{server}/stream.php"
     url = URI.parse url
@@ -12,10 +14,9 @@ class MPlayer
   end
 
   def initialize
-    puts "starting mplayer"
-    
     @stream = IO.popen('mplayer - -demuxer lavf 2>&1', 'w+')
     @buffer = ''
+    @state = :uninited
   end
   
   def handle_stdout
@@ -23,58 +24,55 @@ class MPlayer
     
     while @buffer.include?("\n")
       line = @buffer.slice!(0, @buffer.index("\n") + 1).chomp
-      #p line
+      if line =~ /^A: +([0-9.]+) \(([0-9.:]+)\) of ([0-9.]+) \(([0-9.:]+)\)  ([0-9.]+)%$/
+        @position, @position_str = $1, $2
+        @length, @length_str = $3, $4
+      end
     end
   rescue Errno::EAGAIN
   end
-  
-#A:   6.1 (6.1) of 211.0 (03:31.0)  0.7%
-#A:  66.2 (01:06.2) of 211.0 (03:31.0)  0.7%
-#A: 136.5 (02:16.5) of 211.0 (03:31.0)  0.7%
 
   def stream_from_http http, req
-    puts "starting request"
     http.request(req) do |res|
-      puts "started request"
-      size, total = 0, res.header['Content-Length'].to_i
+      @state = :starting_stream
+      @size = 0
+      @total = res.header['Content-Length'].to_i
       res.read_body do |chunk|
         if chunk.size > 0
-          size += chunk.size
-          print "\r%d%% done (%d of %d)" % [(size * 100) / total, size, total]
+          @state = :streaming
+          @size += chunk.size
+          #print "\r%d%% done (%d of %d)" % [(size * 100) / total, size, total]
           STDOUT.flush
           @stream.print chunk
           @stream.flush
           handle_stdout
         end
       end
-      puts
       
       case res
-      when Net::HTTPSuccess
-        puts "success"
-      when Net::HTTPRedirection
-        puts "redirect to #{res['location']}"
-        url = URI.parse(res['location'])
-        stream_from_http Net::HTTP.new(url.host, url.port), Net::HTTP::Get.new(url.request_uri, {'Cookie' => "PHPSESSID=#{$session}"})
-        puts "redirect done"
-        return
-      else
-        puts "error"
+        when Net::HTTPSuccess
+          #puts "success"
+        when Net::HTTPRedirection
+          url = URI.parse(res['location'])
+          stream_from_http Net::HTTP.new(url.host, url.port), Net::HTTP::Get.new(url.request_uri, {'Cookie' => "PHPSESSID=#{$session}"})
+          return
+        else
+          puts "error!"
+          exit
       end
     end
-#    100% done (5582009 of 5582009)"A: 227.3 (03:47.3) of 0.0 (unknown)  0.7% \e[J"
-
+    
     wait_for_exit
   end
   
   def wait_for_exit
+    @state = :waiting
     @stream.close_write
-    puts "waiting for output to finish"
     until @stream.eof?
       handle_stdout
       sleep 0.1
     end
     @stream.close
-    puts "output is closed"
+    @state = :complete
   end
 end

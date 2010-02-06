@@ -26,13 +26,15 @@ class UI
   
   def redraw
     get_term_size
-    draw_frame 1,1, 30,10, 'Queue'
+    
+    draw_frame 1, 1, 30, @height, 'Queue'
     row = 2
     @client.queue.songs.each_value do |song|
       print color((@client.now_playing == song) ? '1;32' : '1;31')
-      place row, 2, "#{song['SongName'] || song['Name']} - #{song['ArtistName']} - #{song['AlbumName']}"
+      place row, 2, song['SongName'] || song['Name']
       row += 1
     end
+    
     $stdout.flush
   end
   
