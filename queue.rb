@@ -16,7 +16,7 @@ class Queue
         'artistID' => song['ArtistsID'],
         'songID' => song['SongID'],
         'songQueueSongID' => @next_index,
-        'source' => 'user',
+        'source' => song['source'] || 'user',
       }],
       'songQueueID' => @id
     }
@@ -37,8 +37,43 @@ class Queue
     @songs.delete index
   end
   
+  def add_autoplay
+    seeds = {}
+    @songs.values.last(5).each {|song| seeds[song['ArtistID'].to_s] = 'p' }
+    
+    song = @client.request_service 'getSongForAutoplayExt', {
+      'recentSongs' => @songs.values.last(5).map{|song| song['SongID'] },
+      'secondaryArtistWeightModifier' => 0.9,
+      'seedArtistWeightRange' => [70, 100],
+      'maxDuration' => 1500,
+      'minDuration' => 60,
+      'weightModifierRange' => [-9, 9],
+      'frowns' => [],
+      'recentArtists' => @songs.values.last(5).map{|song| song['ArtistID'] },
+      'seeds' => seeds,
+      'songQueueID' => @id
+    }
+    #{"SongID":15220333,"AlbumID":1179236,"ArtistID":1587,"ArtistName":"Toby Keith","AlbumName":"Shock'n Y'all","CoverArtUrl":"http:\/\/beta.grooveshark.com\/static\/amazonart\/s11811240.jpg","EstimateDuration":263,"SponsoredAutoplayID":0,"SongName":"American Soldier","source":"recommended"}
+    
+    self << song
+    song
+  end
+  
   def [] index
     @songs[index]
+  end
+
+  def play index
+    @client.play @songs[index]
+  end
+
+  def play_radio
+    @songs.each_value do |song|
+      @client.play song
+    end
+    while true
+      @client.play add_autoplay
+    end
   end
 
   def play index

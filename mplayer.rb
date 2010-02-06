@@ -39,7 +39,7 @@ class MPlayer
       res.read_body do |chunk|
         if chunk.size > 0
           size += chunk.size
-          puts "%d%% done (%d of %d) %s" % [(size * 100) / total, size, total, chunk[-5..-1].inspect]
+          puts "%d%% done (%d of %d)" % [(size * 100) / total, size, total]
           STDOUT.flush
           @stream.print chunk
           @stream.flush
