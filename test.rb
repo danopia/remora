@@ -11,7 +11,7 @@ puts "Queue is #{client.queue} (#{client.queue.id})"
 run_dbus client
 
 puts "Enter a search query:"
-query = gets
+query = gets.chomp
 puts
 puts "Searching for \"#{query}\":"
 results = client.search_songs(query)['Return']
