@@ -13,7 +13,7 @@ class MPlayer
   def initialize
     puts "starting mplayer"
     
-    @stream = IO.popen('mplayer - -demuxer lavf', 'w+')
+    @stream = IO.popen('mplayer - -demuxer lavf 2>&1', 'w+')
     @buffer = ''
   end
   
