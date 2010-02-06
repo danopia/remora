@@ -14,7 +14,7 @@ class DBusRemora < DBus::Object
     dbus_method :now_playing, "out res:s" do
       info = @@client.now_playing
       next "No song is playing" unless info
-      "#{info['Name']} - #{info['ArtistName']} - #{info['AlbumName']}"
+      "#{info['SongName'] || info['Name']} - #{info['ArtistName']} - #{info['AlbumName']}"
     end
   end
 end
