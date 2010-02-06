@@ -22,7 +22,7 @@ class MPlayer
     
     while @buffer.include?("\n")
       line = @buffer.slice!(0, @buffer.index("\n") + 1).chomp
-      p line
+      #p line
     end
   rescue Errno::EAGAIN
   end

@@ -1,11 +1,14 @@
 require 'client'
 require 'mplayer'
+require 'dbus-interface'
 
 client = GrooveShark::Client.new
 $session = client.session
 puts "Session is #{client.session}"
 puts "Communication token is #{client.comm_token}"
 puts "Queue is #{client.queue}"
+
+run_dbus client
 
 puts "Searching for 'people are crazy':"
 results = client.search_songs('people are crazy')['Return']
@@ -17,11 +20,8 @@ puts
 puts "Please type in a song index to [attempt to] play it:"
 index = gets.to_i
 
-song_id = results[index]['SongID']
-album_id = results[index]['AlbumID']
-
-#client.enqueue(song_id, album_id)
+#client.enqueue results[index]
 
 puts "calling play()"
-client.play song_id
+client.play results[index]
 puts "play() terminated"
