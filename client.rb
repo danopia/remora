@@ -8,6 +8,7 @@ require 'open-uri'
 
 module GrooveShark
 class Client
+  include DRbUndumped
   attr_accessor :session, :comm_token, :queue, :now_playing, :queue
   
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'

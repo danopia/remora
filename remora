@@ -1,0 +1,46 @@
+#!/usr/bin/env ruby
+
+disable_dbus = ARGV.delete '--no-dbus'
+disable_drb = ARGV.delete '--no-drb'
+
+require 'drb' unless disable_drb
+require 'dbus-interface' unless disable_dbus
+
+if ARGV.any?
+  if ARGV.delete 'nowplaying'
+    DRb.start_service
+    client = DRbObject.new nil, 'druby://localhost:68739'
+    info = client.now_playing
+    if info
+      puts "#{info['SongName'] || info['Name']} - #{info['ArtistName']} - #{info['AlbumName']}"
+    else
+      puts "No song is playing"
+    end
+    exit
+  end
+end
+
+require 'client'
+require 'mplayer'
+
+client = GrooveShark::Client.new
+$session = client.session
+
+run_dbus client unless disable_dbus
+DRb.start_service 'druby://localhost:68739', client unless disable_drb
+
+puts "Enter a search query:"
+query = gets.chomp
+puts
+puts "Searching for \"#{query}\":"
+results = client.search_songs(query)['Return']
+results.each do |result|
+  puts "#{results.index result} - #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
+end
+
+puts
+puts "Please type in a song index to [attempt to] play it:"
+index = gets.to_i
+
+client.queue << results[index]
+client.queue.play_radio

@@ -1,4 +1,5 @@
 class MPlayer
+  include DRbUndumped
   attr_accessor :stream, :length, :position, :length2, :position2
   def self.play server, key
     url = "http://#{server}/stream.php"

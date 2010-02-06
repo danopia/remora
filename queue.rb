@@ -1,5 +1,6 @@
 module GrooveShark
 class Queue
+  include DRbUndumped
   attr_accessor :songs, :next_index, :id, :client
   
   def initialize client
@@ -55,7 +56,7 @@ class Queue
     }
     #{"SongID":15220333,"AlbumID":1179236,"ArtistID":1587,"ArtistName":"Toby Keith","AlbumName":"Shock'n Y'all","CoverArtUrl":"http:\/\/beta.grooveshark.com\/static\/amazonart\/s11811240.jpg","EstimateDuration":263,"SponsoredAutoplayID":0,"SongName":"American Soldier","source":"recommended"}
     
-    self << song
+    self << song if song
     song
   end
   
