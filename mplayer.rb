@@ -4,7 +4,7 @@ class MPlayer
     url = "http://#{server}/stream.php"
     url = URI.parse url
     http = Net::HTTP.new url.host, url.port
-    req = Net::HTTP::Post.new url.request_uri
+    req = Net::HTTP::Post.new url.request_uri, {'Cookie' => "PHPSESSID=#{$session}"}
     req.set_form_data({'streamKey' => key}, ';')
     mplayer = self.new
     mplayer.stream_from_http http, req
@@ -39,14 +39,14 @@ class MPlayer
       res.read_body do |chunk|
         if chunk.size > 0
           size += chunk.size
-          print "\r%d%% done (%d of %d)" % [(size * 100) / total, size, total]
+          puts "%d%% done (%d of %d) %s" % [(size * 100) / total, size, total, chunk[-5..-1].inspect]
           STDOUT.flush
           @stream.print chunk
           @stream.flush
           handle_stdout
         end
       end
-      puts
+      
       case res
       when Net::HTTPSuccess
         puts "success"
@@ -60,7 +60,8 @@ class MPlayer
         puts "error"
       end
     end
-    
+#    100% done (5582009 of 5582009)"A: 227.3 (03:47.3) of 0.0 (unknown)  0.7% \e[J"
+
     wait_for_exit
   end
   
