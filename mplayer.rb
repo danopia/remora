@@ -39,13 +39,14 @@ class MPlayer
       res.read_body do |chunk|
         if chunk.size > 0
           size += chunk.size
-          puts "%d%% done (%d of %d)" % [(size * 100) / total, size, total]
+          print "\r%d%% done (%d of %d)" % [(size * 100) / total, size, total]
           STDOUT.flush
           @stream.print chunk
           @stream.flush
           handle_stdout
         end
       end
+      puts
       
       case res
       when Net::HTTPSuccess
