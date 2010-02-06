@@ -52,9 +52,15 @@ ui = Remora::UI.new client
 
 trap 'INT' do
   ui.undo_modes
+  exit
 end
 
 while true
+  ui.panes[:queue].data = client.queue.songs.map do |(index, song)|
+    #"#{song['SongName'] || song['Name']} - #{song['ArtistName']} - #{song['AlbumName']}"
+    "#{index.to_s.rjust 2}. #{song['SongName'] || song['Name']}"
+  end
+  
   ui.redraw
   sleep 1
 end
