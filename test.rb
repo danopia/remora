@@ -10,8 +10,11 @@ puts "Queue is #{client.queue} (#{client.queue.id})"
 
 run_dbus client
 
-puts "Searching for 'honky tonk':"
-results = client.search_songs('honky tonk')['Return']
+puts "Enter a search query:"
+query = gets
+puts
+puts "Searching for \"#{query}\":"
+results = client.search_songs(query)['Return']
 results.each do |result|
   puts "#{results.index result} - #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
 end
