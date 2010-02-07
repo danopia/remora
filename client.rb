@@ -1,5 +1,5 @@
-require 'json_sock'
-require 'queue'
+require File.join(File.dirname(__FILE__), 'json_sock')
+require File.join(File.dirname(__FILE__), 'queue')
 
 require 'digest/md5'
 require 'digest/sha1'

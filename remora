@@ -4,7 +4,7 @@ disable_dbus = ARGV.delete '--no-dbus'
 disable_drb = ARGV.delete '--no-drb'
 
 require 'drb' unless disable_drb
-require 'dbus-interface' unless disable_dbus
+require File.join(File.dirname(__FILE__), 'dbus-interface') unless disable_dbus
 
 if ARGV.any?
   if ARGV.delete 'nowplaying'
@@ -20,9 +20,9 @@ if ARGV.any?
   end
 end
 
-require 'client'
-require 'mplayer'
-require 'ui'
+require File.join(File.dirname(__FILE__), 'client')
+require File.join(File.dirname(__FILE__), 'mplayer')
+require File.join(File.dirname(__FILE__), 'ui')
 
 client = GrooveShark::Client.new
 $session = client.session
