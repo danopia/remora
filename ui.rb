@@ -51,7 +51,9 @@ require File.join(File.dirname(__FILE__), 'ui', 'display')
 require File.join(File.dirname(__FILE__), 'ui', 'pane')
 require File.join(File.dirname(__FILE__), 'ui', 'control')
 require File.join(File.dirname(__FILE__), 'ui', 'listbox')
-#require File.join(File.dirname(__FILE__), 'ui', 'textbox')
+require File.join(File.dirname(__FILE__), 'ui', 'progressbar')
+require File.join(File.dirname(__FILE__), 'ui', 'label')
+require File.join(File.dirname(__FILE__), 'ui', 'textbox')
 
 #~ ui = Remora::UI.new nil
 #~ 
@@ -88,9 +90,13 @@ begin
     end
   end
 
-  display.pane :main, 20, 1, -1, -1, 'Search results' do
-    control :results, Remora::UI::ListBox, 1, 1, -1, -1 do
-      self.number!
+  display.pane :main, 20, 1, -1, -6, 'Search results' do
+    display.active_control = control :search, Remora::UI::TextBox, 2, 1, -2, 1 do
+      self.label = 'Search'
+      self.text = ''
+    end
+    control :results, Remora::UI::ListBox, 1, 2, -1, -1 do
+      number!
       
       data << 'Song 1 - Artist 1 - Album 1'
       data << 'Song 2 - Artist 2 - Album 2'
@@ -109,7 +115,18 @@ begin
     end
   end
 
-  display.redraw while sleep 1
+  display.pane :np, 20, -5, -1, -1, 'Now playing' do
+    control :cue, Remora::UI::ProgressBar, 2, 2, -2, 3 do
+      template '==>  '
+      self.value = 0.2
+    end
+    control :song_name, Remora::UI::Label, 1, 1, -1, 1 do
+      align :center
+      self.text = 'Song - Artist - Album'
+    end
+  end
+
+  display.handle while sleep 0.01
 
 rescue => ex
   display.undo_modes
