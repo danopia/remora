@@ -39,11 +39,15 @@ class MPlayer
       elsif line =~ /^A: +([0-9.]+) \(([0-9.:]+)\) of 0\.0 \(unknown\)  ([0-9.]+)%/
         @position, @position_str = $1.to_i, $2
       else
+        control = @client.display.panes[:log].controls[:output]
+        control.data << line.gsub("\e[J", '')
+        control.data.shift while control.data.size > control.height
+        @client.display.dirty! :log
         next
       end
       
       @client.display.panes[:np].controls[:cue].value = @position
-      @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB) (reading mplayer output)"
+      @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB) (reading mplayer stdout)"
       @client.display.dirty! :np
     end
   rescue Errno::EAGAIN

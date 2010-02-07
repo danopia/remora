@@ -62,7 +62,7 @@ begin
     end
   end
 
-  display.pane :main, 20, 1, -1, -5, 'Search results' do
+  display.pane :main, 20, 1, -1, -15, 'Search results' do
     display.active_control = control :search, Remora::UI::TextBox, 2, 1, -2, 1 do
       self.label = 'Search'
       self.text = ''
@@ -70,6 +70,10 @@ begin
     control :results, Remora::UI::ListBox, 1, 2, -1, -1 do
       number!
     end
+  end
+
+  display.pane :log, 20, -15, -1, -5, 'MPlayer Output' do
+    control :output, Remora::UI::ListBox, 2, 1, -2, -1
   end
 
   display.pane :np, 20, -5, -1, -1, 'Now playing' do
