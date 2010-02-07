@@ -96,7 +96,7 @@ class MPlayer
     
     sleep 0.1 until @total_size
     
-    until @stream_buffer.size > @total_size
+    until @stream_buffer.size >= @total_size
       sleep 0.1 until @stream_buffer.size > @offset
       data = @stream_buffer[@offset, 512]
       @offset += data.size
