@@ -41,7 +41,7 @@ class UI
     panes[:main].redraw
     panes[:np].redraw
     print "\e[u"
-    place 2, 21, @buffer
+    place 2, 22, @buffer
     
     $stdout.flush
   end
@@ -73,6 +73,7 @@ class UI
 	    "#{(@results.index(result)+1).to_s.rjust 2}) #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
 	  end
 	  panes[:main].data.unshift @search
+	  panes[:main].title = "Search Results for #{@search}"
 
 	  @buffer = ''
 	  self.cursor = false
@@ -167,7 +168,7 @@ class UIPane
   
   def redraw
     draw_frame
-    row = 2
+    row = y1 + 1
     data.first(height - 1).each do |line|
       @ui.place row, x1+2, line.to_s[0, width - 3]
       row += 1

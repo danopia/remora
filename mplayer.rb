@@ -1,22 +1,25 @@
 class MPlayer
   include DRbUndumped
+  attr_reader :client
   attr_reader :stream, :state, :total_size, :streamed_size
   attr_reader :position, :position_str, :length, :length_str
   
-  def self.play server, key
+  def self.play server, key, client=nil
     url = "http://#{server}/stream.php"
     url = URI.parse url
     http = Net::HTTP.new url.host, url.port
     req = Net::HTTP::Post.new url.request_uri, {'Cookie' => "PHPSESSID=#{$session}"}
     req.set_form_data({'streamKey' => key}, ';')
-    mplayer = self.new
+    mplayer = self.new client
     mplayer.stream_from_http http, req
   end
 
-  def initialize
+  def initialize client=nil
     @stream = IO.popen('mplayer - -demuxer lavf 2>&1', 'w+')
     @buffer = ''
     @state = :uninited
+    @client = client
+    @client.player = self
   end
   
   def handle_stdout
@@ -24,9 +27,11 @@ class MPlayer
     
     while @buffer.include?("\n")
       line = @buffer.slice!(0, @buffer.index("\n") + 1).chomp
-      if line =~ /^A: +([0-9.]+) \(([0-9.:]+)\) of ([0-9.]+) \(([0-9.:]+)\)  ([0-9.]+)%$/
+      if line =~ /^A: +([0-9.]+) \(([0-9.:]+)\) of ([0-9.]+) \(([0-9.:]+)\)  ([0-9.]+)%/
         @position, @position_str = $1, $2
         @length, @length_str = $3, $4
+      elsif line =~ /^A: +([0-9.]+) \(([0-9.:]+)\) of 0\.0 \(unknown\)  ([0-9.]+)%/
+        @position, @position_str = $1, $2
       end
     end
   rescue Errno::EAGAIN
@@ -35,12 +40,12 @@ class MPlayer
   def stream_from_http http, req
     http.request(req) do |res|
       @state = :starting_stream
-      @size = 0
-      @total = res.header['Content-Length'].to_i
+      @streamed_size = 0
+      @total_size = res.header['Content-Length'].to_i
       res.read_body do |chunk|
         if chunk.size > 0
           @state = :streaming
-          @size += chunk.size
+          @streamed_size += chunk.size
           #print "\r%d%% done (%d of %d)" % [(size * 100) / total, size, total]
           STDOUT.flush
           @stream.print chunk

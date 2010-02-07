@@ -9,7 +9,7 @@ require 'open-uri'
 module GrooveShark
 class Client
   include DRbUndumped
-  attr_accessor :session, :comm_token, :queue, :now_playing
+  attr_accessor :session, :comm_token, :queue, :now_playing, :player
   
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'
   CLIENT = 'gslite'
@@ -106,7 +106,7 @@ class Client
   def play song_info
     @now_playing = song_info
     key = get_stream_auth song_info['SongID']
-    MPlayer.play key['streamServer'], key['streamKey']
+    MPlayer.play key['streamServer'], key['streamKey'], self
     @now_playing = nil
   end
 end
