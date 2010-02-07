@@ -84,7 +84,7 @@ class UI
 	@buffer.gsub!(/.\177/, '')
 	@buffer.gsub!("\177", '')
 	panes[:main].data[0] = @buffer.empty? ? (@search || '') : ''
-	self.cursor = @buffer.any?
+	self.cursor = !(@buffer.empty?)
       end
     end
   rescue Errno::EAGAIN
