@@ -84,8 +84,8 @@ begin
     control :song_name, Remora::UI::Label, 1, 1, -1, 1 do
       align :center
     end
-    control :cue, Remora::UI::ProgressBar, 2, 2, -2, 3 do
-      template '==>  '
+    control :cue, Remora::UI::DoubleProgressBar, 2, 2, -2, 3 do
+      template '==>->  '
     end
     control :position, Remora::UI::Label, 1, 3, -1, 3
   end

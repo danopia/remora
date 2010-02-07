@@ -106,7 +106,9 @@ class Client
   def play song_info
     @display.panes[:np].controls[:song_name].text = "#{song_info['SongName'] || song_info['Name']} - #{song_info['ArtistName']} - #{song_info['AlbumName']}"
     @display.panes[:np].controls[:cue].value = 0
-    @display.panes[:np].controls[:cue].maximum = song_info['EstimateDuration']
+    @display.panes[:np].controls[:cue].maximum = 1
+    @display.panes[:np].controls[:cue].value2 = 0
+    @display.panes[:np].controls[:cue].maximum2 = song_info['EstimateDuration'].to_i
     @display.dirty! :np
     
     @now_playing = song_info

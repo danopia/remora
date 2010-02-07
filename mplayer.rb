@@ -46,7 +46,7 @@ class MPlayer
         next
       end
       
-      @client.display.panes[:np].controls[:cue].value = @position
+      @client.display.panes[:np].controls[:cue].value2 = @position
       @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB) (reading mplayer stdout)"
       @client.display.dirty! :np
     end
@@ -58,11 +58,19 @@ class MPlayer
       @state = :starting_stream
       @streamed_size = 0
       @total_size = res.header['Content-Length'].to_i
+      
+      if @total_size > 0
+        @client.display.panes[:np].controls[:cue].maximum = @total_size
+        @client.display.panes[:np].controls[:cue].value = 0
+        @client.display.dirty! :np
+      end
+      
       res.read_body do |chunk|
         if chunk.size > 0
           @state = :streaming
           @streamed_size += chunk.size
           
+          @client.display.panes[:np].controls[:cue].value = @streamed_size
           @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB) (got data)"
           @client.display.dirty! :np
           
