@@ -83,7 +83,7 @@ class UI
 	@buffer << chr
 	@buffer.gsub!(/.\177/, '')
 	@buffer.gsub!("\177", '')
-	panes[:main].data[0] = @buffer.any? ? '' : (@search || '')
+	panes[:main].data[0] = @buffer.empty? ? (@search || '') : ''
 	self.cursor = @buffer.any?
       end
     end
