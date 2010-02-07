@@ -68,7 +68,7 @@ begin
       "#{index.to_s.rjust 2}. #{song['SongName'] || song['Name']}"
     end
     
-    if client.player
+    if client.player && client.now_playing
       ui.panes[:np].data = [
         "#{client.now_playing['SongName'] || client.now_playing['Name']} - #{client.now_playing['ArtistName']} - #{client.now_playing['AlbumName']}".center(ui.panes[:np].width),
         "="*((client.player.position.to_f/client.now_playing['EstimateDuration'].to_f)*ui.panes[:np].width)+'>',

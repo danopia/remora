@@ -65,6 +65,7 @@ class UI
 	  end
 	  
 	  @buffer = ''
+	  panes[:main].data[0] = @buffer.any? ? '' : (@search || '')
 	  self.cursor = false
 	else
 	  @search = @buffer
