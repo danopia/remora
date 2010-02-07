@@ -170,9 +170,15 @@ class UIPane
   def redraw
     draw_frame
     row = y1 + 1
-    data.first(height - 1).each do |line|
-      @ui.place row, x1+2, line.to_s[0, width - 3]
-      row += 1
+    data.first(height).each do |line|
+      length = line.to_s.size
+      offset = 0
+      while offset <= length
+	@ui.place row, x1+((offset > 0) ? 6 : 2), line.to_s[offset, width - 3]
+	row += 1
+	offset += width - 3
+      end
+      break if row >= y2
     end
     
     $stdout.flush
