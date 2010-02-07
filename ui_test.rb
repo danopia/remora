@@ -69,7 +69,7 @@ begin
     end
   end
 
-  display.pane :main, 20, 1, -1, -6, 'Search results' do
+  display.pane :main, 20, 1, -1, -5, 'Search results' do
     display.active_control = control :search, Remora::UI::TextBox, 2, 1, -2, 1 do
       self.label = 'Search'
       self.text = ''
@@ -95,9 +95,10 @@ begin
   end
 
   display.pane :np, 20, -5, -1, -1, 'Now playing' do
-    control :cue, Remora::UI::ProgressBar, 2, 2, -2, 3 do
-      template '==>  '
-      self.value = 0.2
+    control :cue, Remora::UI::DoubleProgressBar, 2, 2, -2, 3 do
+      template '==>->  '
+      self.value = 0.7
+      self.value2 = 0.2
     end
     control :song_name, Remora::UI::Label, 1, 1, -1, 1 do
       align :center
