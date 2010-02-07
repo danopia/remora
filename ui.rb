@@ -49,7 +49,7 @@ class UI
   def handle_stdin
     $stdin.read_nonblock(1024).each_char do |chr|
       if chr == "\n"
-	next unless @buffer.any?
+	next if @buffer.empty?
 	
 	if @buffer.to_i.to_s == @buffer && @results
 	  index = @buffer.to_i - 1
@@ -65,7 +65,7 @@ class UI
 	  end
 	  
 	  @buffer = ''
-	  panes[:main].data[0] = @buffer.any? ? '' : (@search || '')
+	  panes[:main].data[0] = @buffer.empty? ? (@search || '') : ''
 	  self.cursor = false
 	else
 	  @search = @buffer
