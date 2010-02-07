@@ -76,10 +76,11 @@ begin
     exit
   end
 
-  display.panes[:queue] = Remora::UI::Pane.new(display, 1, 1, 20, -1, 'Queue') do
-    controls[:queue] = Remora::UI::ListBox.new(self, 1, 1, -1, -1) do
+  display.pane :queue, 1, 1, 20, -1, 'Queue' do
+    control :songs, Remora::UI::ListBox, 1, 1, -1, -1 do
       data << 'Hello!'
       data << 'This is a listbox.'
+      data << 'This is a very long entry.'
       data << ''
       data << '#' * width
       data << '#' * width
@@ -87,9 +88,29 @@ begin
     end
   end
 
-  display.redraw
+  display.pane :main, 20, 1, -1, -1, 'Search results' do
+    control :results, Remora::UI::ListBox, 1, 1, -1, -1 do
+      self.number!
+      
+      data << 'Song 1 - Artist 1 - Album 1'
+      data << 'Song 2 - Artist 2 - Album 2'
+      data << 'Another song by another artist'
+      data << 'Another song, but it might be by one of the above artists for all that you know! :D'
+      data << 'Yet another song.'
+      data << 5
+      data << 'LYAH!'
+      data << ''
+      data << 'This is going to be a list of songs.'
+      data << 'It could also be now if I list some.'
+      data << ''
+      data << 'White & Nerdy - Weird Al'
+      data << 'I Wanna Talk About Me - Toby Keith'
+      data << 'Paradise City - Guns n\' Roses'
+    end
+  end
 
-  gets
+  display.redraw while sleep 1
+
 rescue => ex
   display.undo_modes
   puts ex.class, ex.message, ex.backtrace
