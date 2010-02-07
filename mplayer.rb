@@ -43,7 +43,7 @@ class MPlayer
       end
       
       @client.display.panes[:np].controls[:cue].value = @position
-      @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB)"
+      @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB) (reading mplayer output)"
       @client.display.dirty! :np
     end
   rescue Errno::EAGAIN
@@ -58,10 +58,16 @@ class MPlayer
         if chunk.size > 0
           @state = :streaming
           @streamed_size += chunk.size
-          #print "\r%d%% done (%d of %d)" % [(size * 100) / total, size, total]
-          STDOUT.flush
+          
+          @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB) (got data)"
+          @client.display.dirty! :np
+          
           @stream.print chunk
           @stream.flush
+          
+          @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB) (fed to mplayer)"
+          @client.display.dirty! :np
+          
           handle_stdout
         end
       end
