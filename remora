@@ -72,7 +72,7 @@ begin
       ui.panes[:np].data = [
         "#{client.now_playing['SongName'] || client.now_playing['Name']} - #{client.now_playing['ArtistName']} - #{client.now_playing['AlbumName']}".center(ui.panes[:np].width),
         "="*((client.player.position.to_f/client.now_playing['EstimateDuration'].to_f)*ui.panes[:np].width)+'>',
-        "#{time_to_s client.player.position} / #{time_to_s client.now_playing['EstimateDuration']} (#{client.player.streamed_size.to_i/1024} / #{client.player.total_size.to_i/1024} MiB)",
+        "#{time_to_s client.player.position} / #{time_to_s client.now_playing['EstimateDuration']} (#{client.player.streamed_size.to_i/1024} / #{client.player.total_size.to_i/1024} KiB)",
       ]
     end
     
