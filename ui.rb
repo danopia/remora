@@ -168,8 +168,8 @@ class UIPane
   def redraw
     draw_frame
     row = 2
-    data.first(height - 3).each do |line|
-      @ui.place row, x1+1, line.to_s[0, width - 2]
+    data.first(height - 1).each do |line|
+      @ui.place row, x1+2, line.to_s[0, width - 3]
       row += 1
     end
     
