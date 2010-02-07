@@ -9,7 +9,7 @@ require 'open-uri'
 module GrooveShark
 class Client
   include DRbUndumped
-  attr_accessor :session, :comm_token, :queue, :now_playing, :player
+  attr_accessor :session, :comm_token, :queue, :now_playing, :player, :display
   
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'
   CLIENT = 'gslite'
@@ -104,10 +104,17 @@ class Client
   end
   
   def play song_info
+    @display.panes[:np].controls[:song_name].text = "#{song_info['SongName'] || song_info['Name']} - #{song_info['ArtistName']} - #{song_info['AlbumName']}"
+    @display.panes[:np].controls[:cue].value = 0
+    @display.panes[:np].controls[:cue].maximum = song_info['EstimateDuration']
+    @display.dirty! :np
+    
     @now_playing = song_info
     key = get_stream_auth song_info['SongID']
     MPlayer.play key['streamServer'], key['streamKey'], self
     @now_playing = nil
+    
+    
   end
 end
 end

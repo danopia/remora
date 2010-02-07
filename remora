@@ -48,39 +48,76 @@ DRb.start_service 'druby://localhost:68739', client unless disable_drb
   #~ client.queue.play_radio
 #~ end
 
-ui = Remora::UI.new client
+display = client.display = Remora::UI::Display.new(client)
 
 trap 'INT' do
-  ui.undo_modes
+  display.undo_modes
   exit
 end
 
-def time_to_s seconds
-  sec ||= 0
-  minutes = seconds.to_i/60
-  "#{minutes}:#{(seconds.to_i-(minutes*60)).to_s.rjust 2, '0'}"
-end
-
 begin
-  while true
-    ui.panes[:queue].data = client.queue.songs.map do |(index, song)|
-      #"#{song['SongName'] || song['Name']} - #{song['ArtistName']} - #{song['AlbumName']}"
-      "#{index.to_s.rjust 2}. #{song['SongName'] || song['Name']}"
+  display.pane :queue, 1, 1, 20, -1, 'Queue' do
+    control :songs, Remora::UI::ListBox, 1, 1, -1, -1 do
+      number!
     end
-    
-    if client.player && client.now_playing
-      ui.panes[:np].data = [
-        "#{client.now_playing['SongName'] || client.now_playing['Name']} - #{client.now_playing['ArtistName']} - #{client.now_playing['AlbumName']}".center(ui.panes[:np].width),
-        "="*((client.player.position.to_f/client.now_playing['EstimateDuration'].to_f)*ui.panes[:np].width)+'>',
-        "#{time_to_s client.player.position} / #{time_to_s client.now_playing['EstimateDuration']} (#{client.player.streamed_size.to_i/1024} / #{client.player.total_size.to_i/1024} KiB)",
-      ]
-    end
-    
-    ui.redraw
-    sleep 1
   end
+
+  display.pane :main, 20, 1, -1, -5, 'Search results' do
+    display.active_control = control :search, Remora::UI::TextBox, 2, 1, -2, 1 do
+      self.label = 'Search'
+      self.text = ''
+    end
+    control :results, Remora::UI::ListBox, 1, 2, -1, -1 do
+      number!
+    end
+  end
+
+  display.pane :np, 20, -5, -1, -1, 'Now playing' do
+    control :song_name, Remora::UI::Label, 1, 1, -1, 1 do
+      align :center
+    end
+    control :cue, Remora::UI::ProgressBar, 2, 2, -2, 3 do
+      template '==>  '
+    end
+    control :position, Remora::UI::Label, 1, 3, -1, 3
+  end
+  
+  results = nil
+  display.panes[:main].controls[:search].on_submit do |query|
+    next if query.empty?
+	
+    if query.to_i.to_s == query && results
+      index = query.to_i - 1
+      next if index < 0 || index > results.size
+      
+      song = results[index]
+      client.queue << song
+      
+      unless client.now_playing
+        Thread.new do
+          begin
+            client.queue.play_radio
+          rescue => ex
+            display.undo_modes
+            puts ex.class, ex.message, ex.backtrace
+            exit
+          end
+        end
+      end
+    else
+      results = client.search_songs(query)['Return']
+      display.panes[:main].controls[:results].data = results.map do |result|
+        "#{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
+      end
+      display.panes[:main].title = "Search Results for #{query}"
+      display.dirty! :main
+    end
+  end
+
+  display.handle while sleep 0.01
+
 rescue => ex
-  ui.undo_modes
+  display.undo_modes
   puts ex.class, ex.message, ex.backtrace
   exit
 end

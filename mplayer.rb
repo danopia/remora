@@ -21,6 +21,12 @@ class MPlayer
     @client = client
     @client.player = self
   end
+
+  def time_to_s seconds
+    sec ||= 0
+    minutes = seconds.to_i/60
+    "#{minutes}:#{(seconds.to_i-(minutes*60)).to_s.rjust 2, '0'}"
+  end
   
   def handle_stdout
     @buffer += @stream.read_nonblock(1024).gsub("\r", "\n")
@@ -28,11 +34,17 @@ class MPlayer
     while @buffer.include?("\n")
       line = @buffer.slice!(0, @buffer.index("\n") + 1).chomp
       if line =~ /^A: +([0-9.]+) \(([0-9.:]+)\) of ([0-9.]+) \(([0-9.:]+)\)  ([0-9.]+)%/
-        @position, @position_str = $1, $2
-        @length, @length_str = $3, $4
+        @position, @position_str = $1.to_i, $2
+        @length, @length_str = $3.to_i, $4
       elsif line =~ /^A: +([0-9.]+) \(([0-9.:]+)\) of 0\.0 \(unknown\)  ([0-9.]+)%/
-        @position, @position_str = $1, $2
+        @position, @position_str = $1.to_i, $2
+      else
+        next
       end
+      
+      @client.display.panes[:np].controls[:cue].value = @position
+      @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB)"
+      @client.display.dirty! :np
     end
   rescue Errno::EAGAIN
   end
