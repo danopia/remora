@@ -1,10 +1,11 @@
 module Remora
 class UI
-  attr_accessor :width, :height, :client, :panes
+  attr_accessor :width, :height, :client, :panes, :buffer, :mode
   
   def initialize client
     @client = client
     @panes = {}
+    @buffer = ''
     prepare_modes
     get_term_size
     
@@ -27,14 +28,65 @@ class UI
   end
   
   def redraw
+    handle_stdin
+  
     get_term_size
     print "\e[H\e[J" # clear all and go home
     
-    @panes.each_value do |pane|
-      pane.redraw
-    end
+    #~ @panes.each_value do |pane|
+      #~ pane.redraw
+    #~ end
+    print "\e[s"
+    panes[:queue].redraw
+    panes[:main].redraw
+    panes[:np].redraw
+    print "\e[u"
+    place 2, 21, @buffer
     
     $stdout.flush
+  end
+  
+  def handle_stdin
+    $stdin.read_nonblock(1024).each_char do |chr|
+      if chr == "\n"
+	next unless @buffer.any?
+	
+	if @buffer.to_i.to_s == @buffer && @results
+	  index = @buffer.to_i - 1
+	  next if index < 0 || index > @results.size
+	  
+	  song = @results[index]
+	  @client.queue << song
+	  
+	  unless @client.now_playing
+	    Thread.new do
+	      @client.queue.play_radio
+	    end
+	  end
+	  
+	  @buffer = ''
+	  self.cursor = false
+	else
+	  @search = @buffer
+	  @results = @client.search_songs(@search)['Return']
+	  panes[:main].data = @results.map do |result|
+	    "#{(@results.index(result)+1).to_s.rjust 2}) #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
+	  end
+	  panes[:main].data.unshift @search
+
+	  @buffer = ''
+	  self.cursor = false
+	end
+      else
+	@buffer << chr
+	@buffer.gsub!(/.\177/, '')
+	@buffer.gsub!("\177", '')
+	panes[:main].data[0] = @buffer.any? ? '' : (@search || '')
+	self.cursor = @buffer.any?
+      end
+    end
+  rescue Errno::EAGAIN
+  rescue EOFError
   end
   
   def get_term_size
@@ -116,8 +168,9 @@ class UIPane
   def redraw
     draw_frame
     row = 2
-    data.last(height - 3).each do |line|
-      @ui.place row, x1+1, line
+    data.first(height - 3).each do |line|
+      @ui.place row, x1+1, line.to_s[0, width - 2]
+      row += 1
     end
     
     $stdout.flush
@@ -154,4 +207,19 @@ end
 #~ results = client.search_songs(query)['Return']
 #~ results.each do |result|
   #~ puts "#{results.index result} - #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
+#~ end
+
+#~ ui = Remora::UI.new nil
+#~ 
+#~ ui.panes[:queue].data = ['1. Song One', '2. Another Song']
+#~ 
+#~ trap 'INT' do
+  #~ ui.undo_modes
+  #~ exit
+#~ end
+#~ 
+#~ while true
+  #~ 
+  #~ ui.redraw
+  #~ sleep 0.1
 #~ end

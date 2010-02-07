@@ -30,23 +30,23 @@ $session = client.session
 run_dbus client unless disable_dbus
 DRb.start_service 'druby://localhost:68739', client unless disable_drb
 
-puts "Enter a search query:"
-query = gets.chomp
-puts
-puts "Searching for \"#{query}\":"
-results = client.search_songs(query)['Return']
-results.each do |result|
-  puts "#{results.index result} - #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
-end
-
-puts
-puts "Please type in a song index to [attempt to] play it:"
-index = gets.to_i
-
-client.queue << results[index]
-Thread.new do
-  client.queue.play_radio
-end
+#~ puts "Enter a search query:"
+#~ query = gets.chomp
+#~ puts
+#~ puts "Searching for \"#{query}\":"
+#~ results = client.search_songs(query)['Return']
+#~ results.each do |result|
+  #~ puts "#{results.index result} - #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
+#~ end
+#~ 
+#~ puts
+#~ puts "Please type in a song index to [attempt to] play it:"
+#~ index = gets.to_i
+#~ 
+#~ client.queue << results[index]
+#~ Thread.new do
+  #~ client.queue.play_radio
+#~ end
 
 ui = Remora::UI.new client
 
@@ -55,12 +55,18 @@ trap 'INT' do
   exit
 end
 
-while true
-  ui.panes[:queue].data = client.queue.songs.map do |(index, song)|
-    #"#{song['SongName'] || song['Name']} - #{song['ArtistName']} - #{song['AlbumName']}"
-    "#{index.to_s.rjust 2}. #{song['SongName'] || song['Name']}"
+begin
+  while true
+    ui.panes[:queue].data = client.queue.songs.map do |(index, song)|
+      #"#{song['SongName'] || song['Name']} - #{song['ArtistName']} - #{song['AlbumName']}"
+      "#{index.to_s.rjust 2}. #{song['SongName'] || song['Name']}"
+    end
+    
+    ui.redraw
+    sleep 0.1
   end
-  
-  ui.redraw
-  sleep 1
+rescue => ex
+  ui.undo_modes
+  puts ex.class, ex.message, ex.backtrace
+  exit
 end
