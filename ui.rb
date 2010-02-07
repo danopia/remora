@@ -76,9 +76,16 @@ begin
     exit
   end
 
-  queue_pane = display.panes[:queue] = Remora::UI::Pane.new(display, 1, 1, 20, -1, 'Queue')
-  queue_list = queue_pane.controls[:queue] = Remora::UI::ListBox.new(queue_pane, 1, 1, -1, -1)
-  queue_list.data << 'Hello!'
+  display.panes[:queue] = Remora::UI::Pane.new(display, 1, 1, 20, -1, 'Queue') do
+    controls[:queue] = Remora::UI::ListBox.new(self, 1, 1, -1, -1) do
+      data << 'Hello!'
+      data << 'This is a listbox.'
+      data << ''
+      data << '#' * width
+      data << '#' * width
+      data << '#' * width
+    end
+  end
 
   display.redraw
 
