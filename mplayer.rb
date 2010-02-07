@@ -1,6 +1,6 @@
 class MPlayer
   include DRbUndumped
-  attr_reader :client
+  attr_reader :client, :buffer, :stream_buffer, :offset, :thread
   attr_reader :stream, :state, :total_size, :streamed_size
   attr_reader :position, :position_str, :length, :length_str
   
@@ -17,6 +17,8 @@ class MPlayer
   def initialize client=nil
     @stream = IO.popen('mplayer - -demuxer lavf 2>&1', 'w+')
     @buffer = ''
+    @stream_buffer = ''
+    @offset = 0
     @state = :uninited
     @client = client
     @client.player = self
@@ -47,54 +49,61 @@ class MPlayer
       end
       
       @client.display.panes[:np].controls[:cue].value2 = @position
-      @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB) (reading mplayer stdout)"
+      @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (" + (@state == :playing ? "-#{time_to_s @client.now_playing['EstimateDuration'].to_i - @position})" : "#{@stream_buffer.size / 1024} / #{@total_size / 1024} KiB)")
       @client.display.dirty! :np
     end
   rescue Errno::EAGAIN
   end
 
   def stream_from_http http, req
-    http.request(req) do |res|
-      @state = :starting_stream
-      @streamed_size = 0
-      @total_size = res.header['Content-Length'].to_i
-      
-      if @total_size > 0
-        @client.display.panes[:np].controls[:cue].maximum = @total_size
-        @client.display.panes[:np].controls[:cue].value = 0
-        @client.display.dirty! :np
-      end
-      
-      res.read_body do |chunk|
-        if chunk.size > 0
-          @state = :streaming
-          @streamed_size += chunk.size
-          
-          @client.display.panes[:np].controls[:cue].value = @streamed_size
-          @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB) (got data)"
+    @thread = Thread.new do
+      http.request(req) do |res|
+        @state = :starting_stream
+        @streamed_size = 0
+        @total_size = res.header['Content-Length'].to_i
+        
+        if @total_size && @total_size > 0
+          @client.display.panes[:np].controls[:cue].maximum = @total_size
+          @client.display.panes[:np].controls[:cue].value = 0
           @client.display.dirty! :np
-          
-          @stream.print chunk
-          @stream.flush
-          
-          @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@streamed_size / 1024} / #{@total_size / 1024} KiB) (fed to mplayer)"
-          @client.display.dirty! :np
-          
-          handle_stdout
+        end
+        
+        res.read_body do |chunk|
+          if chunk.size > 0
+            @stream_buffer << chunk
+            @state = :streaming
+            
+            @client.display.panes[:np].controls[:cue].value = @stream_buffer.size
+            @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@stream_buffer.size / 1024} / #{@total_size / 1024} KiB)"
+            @client.display.dirty! :np
+          end
+        end
+        
+        case res
+          when Net::HTTPSuccess
+            #puts "success"
+          when Net::HTTPRedirection
+            url = URI.parse(res['location'])
+            stream_from_http Net::HTTP.new(url.host, url.port), Net::HTTP::Get.new(url.request_uri, {'Cookie' => "PHPSESSID=#{$session}"})
+            return
+          else
+            puts "error!"
+            exit
         end
       end
+      @state = :playing
+    end
+    
+    sleep 0.1 until @total_size
+    
+    until @stream_buffer.size > @total_size
+      sleep 0.1 until @stream_buffer.size > @offset
+      data = @stream_buffer[@offset, 512]
+      @offset += data.size
+      @stream.write data
+      @stream.flush
       
-      case res
-        when Net::HTTPSuccess
-          #puts "success"
-        when Net::HTTPRedirection
-          url = URI.parse(res['location'])
-          stream_from_http Net::HTTP.new(url.host, url.port), Net::HTTP::Get.new(url.request_uri, {'Cookie' => "PHPSESSID=#{$session}"})
-          return
-        else
-          puts "error!"
-          exit
-      end
+      handle_stdout
     end
     
     wait_for_exit
