@@ -60,14 +60,10 @@ class Display
     print "\e[H\e[J" if panes == true # clear all and go home
     self.cursor = active_control
     
-    if panes == true
-      panes = @panes.values
-    else
-      panes.map! {|key| @panes[key] }
-    end
+    panes = @panes.keys if panes == true
     
-    panes.each do |pane|
-      pane.redraw
+    panes.each do |key|
+      @panes[key].redraw
     end
     print "\e[u"
     
