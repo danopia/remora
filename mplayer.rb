@@ -11,7 +11,7 @@ class MPlayer
     req = Net::HTTP::Post.new url.request_uri, {'Cookie' => "PHPSESSID=#{$session}"}
     req.set_form_data({'streamKey' => key}, ';')
     mplayer = self.new client
-    mplayer.stream_from_http http, req
+    mplayer.play_from_http http, req
   end
 
   def initialize client=nil
@@ -55,6 +55,27 @@ class MPlayer
   rescue Errno::EAGAIN
   end
 
+  def play_from_http http, req
+    @thread = Thread.new do
+      stream_from_http http, req
+      @state = :playing
+    end
+    
+    sleep 0.1 until @total_size && @total_size > 0
+    
+    until @stream_buffer.size >= @total_size && @offset >= @total_size
+      sleep 0.1 until @stream_buffer.size > @offset
+      data = @stream_buffer[@offset, 512]
+      @offset += data.size
+      @stream.write data
+      @stream.flush
+      
+      handle_stdout
+    end
+    
+    wait_for_exit
+  end
+
   def stream_from_http http, req
     @thread = Thread.new do
       http.request(req) do |res|
@@ -90,22 +111,7 @@ class MPlayer
             exit
         end
       end
-      @state = :playing
     end
-    
-    sleep 0.1 until @total_size && @total_size > 0
-    
-    until @stream_buffer.size >= @total_size
-      sleep 0.1 until @stream_buffer.size > @offset
-      data = @stream_buffer[@offset, 512]
-      @offset += data.size
-      @stream.write data
-      @stream.flush
-      
-      handle_stdout
-    end
-    
-    wait_for_exit
   end
   
   def wait_for_exit
