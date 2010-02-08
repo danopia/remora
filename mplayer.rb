@@ -59,7 +59,6 @@ class MPlayer
     @thread = Thread.new do
       http.request(req) do |res|
         @state = :starting_stream
-        @streamed_size = 0
         @total_size = res.header['Content-Length'].to_i
         
         if @total_size && @total_size > 0
@@ -94,7 +93,7 @@ class MPlayer
       @state = :playing
     end
     
-    sleep 0.1 until @total_size
+    sleep 0.1 until @total_size && @total_size > 0
     
     until @stream_buffer.size >= @total_size
       sleep 0.1 until @stream_buffer.size > @offset
