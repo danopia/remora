@@ -18,7 +18,7 @@ class TextBox < Label
       when :right
         text.rjust width
       else
-        @display.place y1, x1 + text.size, "\e[s"
+        @display.place y1, x1 + text.size, "\e[s" if @display.active_control == self
     end
     #print "\e[s" # save
   end
