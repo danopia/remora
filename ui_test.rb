@@ -106,6 +106,17 @@ begin
     end
   end
 
+  display.alert 30, 6, 'Login to Grooveshark' do
+    display.active_control = control :user, Remora::UI::TextBox, 3, 2, -3, 2 do
+      self.label = 'Username'
+      self.text = ''
+    end
+    control :pass, Remora::UI::TextBox, 3, 4, -3, 4 do
+      self.label = 'Password'
+      self.text = ''
+    end
+  end
+
   display.handle while sleep 0.01
 
 rescue => ex

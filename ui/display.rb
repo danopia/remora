@@ -18,6 +18,10 @@ class Display
     @panes[name] = Pane.new(self, *args, &blck)
   end
   
+  def alert *args, &blck
+    @panes[:alert] = Alert.new(self, *args, &blck)
+  end
+  
   def place row, col, text
     print "\e[#{row.to_i};#{col.to_i}H#{text}"
   end
