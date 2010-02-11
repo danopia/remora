@@ -32,7 +32,7 @@ require File.join(File.dirname(__FILE__), 'ui')
 client = GrooveShark::Client.new
 $session = client.session
 
-client.use_aoss = true if ARGV.delete '--use-aos'
+client.use_aoss = true if ARGV.delete '--use-aoss'
 
 run_dbus client unless disable_dbus
 DRb.start_service 'druby://localhost:68739', client unless disable_drb
