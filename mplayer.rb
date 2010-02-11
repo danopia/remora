@@ -15,7 +15,11 @@ class MPlayer
   end
 
   def initialize client=nil
-    @stream = IO.popen('mplayer - -demuxer lavf 2>&1', 'w+')
+    if client.use_aoss
+      @stream = IO.popen('aoss mplayer - -demuxer lavf 2>&1', 'w+')
+    else
+      @stream = IO.popen('mplayer - -demuxer lavf 2>&1', 'w+')
+    end
     @buffer = ''
     @stream_buffer = ''
     @offset = 0
