@@ -28,6 +28,13 @@ class TextBox < Label
     @handler = blck
   end
   
+  def value= val
+    @text = val
+  end
+  def value
+    @text
+  end
+  
   def text
     return @text if @label.empty?
     "#{@label}: #{@mask ? (@mask * @text.size) : @text}"

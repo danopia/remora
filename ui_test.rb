@@ -119,8 +119,14 @@ begin
     control :submit, Remora::UI::Button, 10, 6, -10, 6 do
       self.text = 'Login'
       self.alignment = :center
+      
+      on_submit do
+	raise pane.yank_values.inspect
+      end
     end
   end
+  
+  #display.panes[:alert].controls[:sumbit].
 
   display.handle while sleep 0.01
 

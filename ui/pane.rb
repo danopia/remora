@@ -12,6 +12,16 @@ class Pane
     instance_eval &blck if blck
   end
   
+  def yank_values
+    vals = {}
+    @controls.each_pair do |key, control|
+      next unless control.respond_to? :value
+      vals[key] = control.value
+      control.value = ''
+    end
+    vals
+  end
+  
   def control name, type, *args, &blck
     @controls[name] = type.new(self, *args, &blck)
   end
