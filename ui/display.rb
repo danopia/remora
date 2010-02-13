@@ -36,11 +36,9 @@ class Display
   end
   
   def dirty! pane=nil
-    if pane && @dirty.is_a?(Array) && !(@dirty.include?(pane))
-      @dirty << pane
-    elsif pane && !@dirty
-      @dirty = [pane]
-    elsif !pane
+    if pane
+      @panes[pane].dirty!
+    else
       @dirty = true
     end
   end
@@ -55,20 +53,21 @@ class Display
       dirty!
     end
     
-    return unless @dirty
-    redraw @dirty
-    @dirty = false
+    if @dirty
+      redraw
+      @dirty = false
+    else
+      panes = @panes.values.select {|pane| pane.dirty? }
+      redraw panes if panes.any?
+    end
+    @panes.each_value {|pane| pane.dirty = false }
   end
   
-  def redraw panes=true
-    print "\e[H\e[J" if panes == true # clear all and go home
-    self.cursor = active_control
+  def redraw panes=nil
+    print "\e[H\e[J" unless panes # clear all and go home
     
-    panes = @panes.keys if panes == true
-    
-    panes.each do |key|
-      @panes[key].redraw
-    end
+    panes ||= @panes.values
+    panes.each {|pane| pane.redraw }
     print "\e[u"
     
     $stdout.flush

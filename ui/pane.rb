@@ -1,15 +1,21 @@
 module Remora
 module UI
 class Pane
-  attr_accessor :display, :x1, :y1, :x2, :y2, :title, :controls, :handler
+  attr_accessor :display, :x1, :y1, :x2, :y2, :title, :controls, :handler, :dirty
   
   def initialize display, x1, y1, x2, y2, title, controls={}, &blck
     @display = display
     @x1, @y1 = x1, y1
     @x2, @y2 = x2, y2
     @title, @controls = title, controls
+    @dirty = false
     
     instance_eval &blck if blck
+  end
+  
+  alias dirty? dirty
+  def dirty!
+    @dirty = true
   end
   
   def yank_values
