@@ -98,44 +98,6 @@ class Display
       else
         @active_control.handle_char chr if @active_control
       end
-      #~ if chr == "\n"
-        #~ next if @buffer.empty?
-        #~ 
-        #~ if @buffer.to_i.to_s == @buffer && @results
-          #~ index = @buffer.to_i - 1
-          #~ next if index < 0 || index > @results.size
-          #~ 
-          #~ song = @results[index]
-          #~ @client.queue << song
-          #~ 
-          #~ unless @client.now_playing
-            #~ Thread.new do
-              #~ @client.queue.play_radio
-            #~ end
-          #~ end
-          #~ 
-          #~ @buffer = ''
-          #~ panes[:main].data[0] = @buffer.empty? ? (@search || '') : ''
-          #~ self.cursor = false
-        #~ else
-          #~ @search = @buffer
-          #~ @results = @client.search_songs(@search)['Return']
-          #~ panes[:main].data = @results.map do |result|
-            #~ "#{(@results.index(result)+1).to_s.rjust 2}) #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
-          #~ end
-          #~ panes[:main].data.unshift @search
-          #~ panes[:main].title = "Search Results for #{@search}"
-#~ 
-          #~ @buffer = ''
-          #~ self.cursor = false
-        #~ end
-      #~ else
-      #~ @buffer << chr
-      #~ @buffer.gsub!(/.\177/, '')
-      #~ @buffer.gsub!("\177", '')
-      #~ panes[:main].data[0] = @buffer.empty? ? (@search || '') : ''
-      #~ self.cursor = !(@buffer.empty?)
-      #~ end
     end
     
     #self.cursor = active_control
