@@ -40,9 +40,13 @@ class TextBox < Label
     "#{@label}: #{@mask ? (@mask * @text.size) : @text}"
   end
   
+  def handler
+    @handler || @pane.handler
+  end
+  
   def handle_char char
     if char == "\n" && !@multiline
-      @handler.call @text if @handler
+      handler.call self if handler
       @text = ''
     elsif char == "\177"
       @text.slice! -1

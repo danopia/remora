@@ -119,10 +119,10 @@ begin
     control :submit, Remora::UI::Button, 10, 6, -10, 6 do
       self.text = 'Login'
       self.alignment = :center
+    end
       
-      on_submit do
-	raise pane.yank_values.inspect
-      end
+    on_submit do
+      raise yank_values.inspect
     end
   end
   

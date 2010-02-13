@@ -1,7 +1,7 @@
 module Remora
 module UI
 class Pane
-  attr_accessor :display, :x1, :y1, :x2, :y2, :title, :controls
+  attr_accessor :display, :x1, :y1, :x2, :y2, :title, :controls, :handler
   
   def initialize display, x1, y1, x2, y2, title, controls={}, &blck
     @display = display
@@ -20,6 +20,10 @@ class Pane
       control.value = ''
     end
     vals
+  end
+  
+  def on_submit &blck
+    @handler = blck
   end
   
   def control name, type, *args, &blck

@@ -9,13 +9,17 @@ class Button < Label
   
   def handle_char char
     if char == "\n"
-      @handler.call if @handler
+      handler.call self if handler
     end
     #redraw
   end
   
   def text
     "[ #{@text} ]"
+  end
+  
+  def handler
+    @handler || @pane.handler
   end
   
   def redraw
