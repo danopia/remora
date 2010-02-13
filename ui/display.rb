@@ -100,7 +100,6 @@ class Display
       end
     end
     
-    #self.cursor = active_control
     $stdout.flush
     
   rescue Errno::EAGAIN

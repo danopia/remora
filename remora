@@ -94,8 +94,7 @@ begin
   end
   
   results = nil
-  display.panes[:main].controls[:search].on_submit do |box|
-    query = box.value
+  display.panes[:main].controls[:search].on_submit do |box, query|
     next if query.empty?
 	
     if query.to_i.to_s == query && results
