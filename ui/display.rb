@@ -79,18 +79,22 @@ class Display
     @active_control = control
   end
   
+  def cycle_controls
+    index = @active_pane.controls.keys.index @active_pane.controls.key(@active_control)
+    begin
+      index += 1
+      index = 0 if index >= @active_pane.controls.size
+    end until @active_pane.controls[@active_pane.controls.keys[index]].respond_to? :handle_char
+    old = @active_control
+    @active_control = @active_pane.controls[@active_pane.controls.keys[index]]
+    old.redraw
+    @active_control.redraw
+  end
+  
   def handle_stdin
     $stdin.read_nonblock(1024).each_char do |chr|
       if chr == "\t"
-        index = @active_pane.controls.keys.index @active_pane.controls.key(@active_control)
-        begin
-          index += 1
-          index = 0 if index >= @active_pane.controls.size
-        end until @active_pane.controls[@active_pane.controls.keys[index]].respond_to? :handle_char
-        old = @active_control
-        @active_control = @active_pane.controls[@active_pane.controls.keys[index]]
-        old.redraw
-        @active_control.redraw
+        cycle_controls
       else
         @active_control.handle_char chr if @active_control
       end
