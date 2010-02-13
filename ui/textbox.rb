@@ -20,6 +20,7 @@ class TextBox < Label
       else
         @display.place y1, x1 + text.size, "\e[s" if @display.active_control == self
     end
+    @display.cursor = true if @display.active_control == self
     #print "\e[s" # save
   end
   
