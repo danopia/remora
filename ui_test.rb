@@ -114,6 +114,7 @@ begin
     control :pass, Remora::UI::TextBox, 3, 4, -3, 4 do
       self.label = 'Password'
       self.text = ''
+      self.mask = '*'
     end
   end
 

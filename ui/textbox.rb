@@ -1,7 +1,7 @@
 module Remora
 module UI
 class TextBox < Label
-  attr_accessor :multiline, :handler, :label
+  attr_accessor :multiline, :handler, :label, :mask
   
   def initialize *args
     @label = ''
@@ -29,7 +29,7 @@ class TextBox < Label
   
   def text
     return @text if @label.empty?
-    "#{@label}: #{@text}"
+    "#{@label}: #{@mask ? (@mask * @text.size) : @text}"
   end
   
   def handle_char char
