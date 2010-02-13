@@ -1,7 +1,7 @@
 module Remora
 module UI
 class Display
-  attr_accessor :width, :height, :client, :panes, :buffer, :dirty, :active_control
+  attr_accessor :width, :height, :client, :panes, :buffer, :dirty, :active_pane, :active_control
   
   def initialize client
     @client = client
@@ -74,9 +74,24 @@ class Display
     $stdout.flush
   end
   
+  def active_control= control
+    @active_pane = control.pane
+    @active_control = control
+  end
+  
   def handle_stdin
     $stdin.read_nonblock(1024).each_char do |chr|
-      active_control.handle_char chr if active_control
+      if chr == "\t"
+        index = @active_pane.controls.keys.index @active_pane.controls.index(@active_control)
+        begin
+          index += 1
+          index = 0 if index >= @active_pane.controls.size
+        end until @active_pane.controls[@active_pane.controls.keys[index]].respond_to? :handle_char
+        @active_control = @active_pane.controls[@active_pane.controls.keys[index]]
+        @active_control.redraw
+      else
+        @active_control.handle_char chr if @active_control
+      end
       #~ if chr == "\n"
         #~ next if @buffer.empty?
         #~ 
