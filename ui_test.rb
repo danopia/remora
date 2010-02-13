@@ -106,7 +106,7 @@ begin
     end
   end
 
-  display.alert 30, 6, 'Login to Grooveshark' do
+  display.alert 30, 8, 'Login to Grooveshark' do
     display.active_control = control :user, Remora::UI::TextBox, 3, 2, -3, 2 do
       self.label = 'Username'
       self.text = ''
@@ -115,6 +115,10 @@ begin
       self.label = 'Password'
       self.text = ''
       self.mask = '*'
+    end
+    control :submit, Remora::UI::Button, 10, 6, -10, 6 do
+      self.text = 'Login'
+      self.alignment = :center
     end
   end
 

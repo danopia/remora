@@ -87,7 +87,9 @@ class Display
           index += 1
           index = 0 if index >= @active_pane.controls.size
         end until @active_pane.controls[@active_pane.controls.keys[index]].respond_to? :handle_char
+        old = @active_control
         @active_control = @active_pane.controls[@active_pane.controls.keys[index]]
+        old.redraw
         @active_control.redraw
       else
         @active_control.handle_char chr if @active_control
