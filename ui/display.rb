@@ -82,7 +82,7 @@ class Display
   def handle_stdin
     $stdin.read_nonblock(1024).each_char do |chr|
       if chr == "\t"
-        index = @active_pane.controls.keys.index @active_pane.controls.index(@active_control)
+        index = @active_pane.controls.keys.index @active_pane.controls.key(@active_control)
         begin
           index += 1
           index = 0 if index >= @active_pane.controls.size
