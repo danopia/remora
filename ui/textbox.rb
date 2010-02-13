@@ -36,8 +36,9 @@ class TextBox < Label
   end
   
   def text
-    return @text if @label.empty?
-    "#{@label}: #{@mask ? (@mask * @text.size) : @text}"
+    text = @mask ? (@mask * @text.size) : @text
+    text = "#{@label}: #{text}" unless @label.empty?
+    text
   end
   
   def handler
