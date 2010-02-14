@@ -36,8 +36,8 @@ class TextBox < Label
   end
   
   def text
-    text = @mask ? (@mask * @text.size) : @text
-    text = "#{@label}: #{text}" unless @label.empty?
+    text = @mask ? (@mask * value.size) : value
+    text = "#{label}: #{text}" unless label.empty?
     text
   end
   
@@ -55,6 +55,20 @@ class TextBox < Label
       @text += char
     end
     redraw
+  end
+end
+
+class CommandBox < TextBox
+  def command?
+    @text[0,1] == '/'
+  end
+  
+  def label
+    command? ? 'Command' : @label
+  end
+  
+  def value
+    command? ? super[1..-1] : super
   end
 end
 end
