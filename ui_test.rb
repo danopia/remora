@@ -70,7 +70,7 @@ begin
   end
 
   display.pane :main, 20, 1, -1, -5, 'Search results' do
-    display.active_control = control :search, Remora::UI::TextBox, 2, 1, -2, 1 do
+    control :search, Remora::UI::CommandBox, 2, 1, -2, 1 do
       self.label = 'Search'
       self.text = ''
     end
@@ -122,11 +122,13 @@ begin
     end
       
     on_submit do
-      raise yank_values.inspect
+      yank_values
+      #raise yank_values.inspect
+      display.panes.delete :alert
+      display.active_control = display.panes[:main].controls[:search]
+      display.dirty!
     end
   end
-  
-  #display.panes[:alert].controls[:sumbit].
 
   display.handle while sleep 0.01
 
