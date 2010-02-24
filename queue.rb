@@ -23,7 +23,7 @@ class Queue
     }
     @songs[@next_index] = song
     @next_index += 1
-    @next_index - 1
+    #@next_index - 1
     
     @client.display.panes[:queue].controls[:songs].data = @songs.map do |(index, song)|
       song['SongName'] || song['Name']
@@ -69,16 +69,17 @@ class Queue
     @songs[index]
   end
 
-  def play index
-    @client.play @songs[index]
-  end
-
   def play_radio
     @songs.each_value do |song|
       @client.play song
     end
     while true
-      @client.play add_autoplay
+      song = add_autoplay
+      if song
+        @client.play song
+      else
+        sleep 2.5
+      end
     end
   end
 
