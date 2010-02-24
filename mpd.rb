@@ -1,12 +1,18 @@
 require 'lineconnection'
 
+$sock ||= TCPSocket.new('localhost', 5465)
+
 module Remora
   class MPDConnection < LineConnection
-    attr_accessor :client
+    attr_accessor :client, :list_version, :list_hash
     
     def initialize client
       super
       @client = client
+      @list_version = 0
+      @list_hash = nil
+      
+      load __FILE__
     end
     
     def post_init
@@ -14,40 +20,55 @@ module Remora
       send_line 'OK MPD 0.12.2'
     end
     
+    def time_to_s seconds
+      sec ||= 0
+      minutes = seconds.to_i/60
+      "#{minutes}:#{(seconds.to_i-(minutes*60)).to_s.rjust 2, '0'}"
+    end
+    
     def receive_line line
+      if @list_hash != @client.queue.songs.hash
+        @list_hash = @client.queue.songs.hash
+        @list_version += 1
+      end
+      
       args = line.split
       case args.first
         when 'password'
-          puts "Got a password"
+          $sock.puts "Got a password"
           send_line 'OK'
         
         when 'outputs'
-          puts "Output listing request"
+          $sock.puts "Output listing request"
           send_line "outputid: 0"
           send_line "outputname: Speakers"
           send_line "outputenabled: 1"
           send_line 'OK'
         
         when 'enableoutput'
-          puts "Output enabling request"
+          $sock.puts "Output enabling request"
           send_line 'ACK Not supported'
         
         when 'disableoutput'
-          puts "Output disabling request"
+          $sock.puts "Output disabling request"
           send_line 'ACK Not supported'
           
         when 'status'
-          puts "Status request"
+          $sock.puts "Status request"
           send_line 'volume: 100'
           send_line 'repeat: 0'
           send_line 'random: 0'
-          #~ send_line 'playlist: 0'
-          #~ send_line 'playlistlength: 0'
+          send_line "playlist: #{@list_version}"
+          send_line "playlistlength: #{@client.queue.songs.size}"
           send_line 'xfade: 0'
-          send_line 'state: stop'
-          #~ send_line 'song: 0'
-          #~ send_line 'songid: 0'
-          #~ send_line 'time: 0:0'
+          send_line 'state: ' + (@client.now_playing ? 'play' : 'stop')
+          
+          if @client.now_playing && @client.player
+            send_line "song: #{@client.queue.songs.index @client.now_playing}"
+            send_line "songid: #{@client.now_playing['SongID']}"
+            send_line "time: #{@client.player.position}:#{@client.now_playing['EstimateDuration']}"
+          end
+          
           #~ send_line 'bitrate: 0'
           #~ send_line 'audio: 0:0:0'
           #~ send_line 'updating_db: 0'
@@ -57,43 +78,117 @@ module Remora
           send_line 'OK'
         
         when 'currentsong'
-          send_line 'file: albums/bob_marley/songs_of_freedom/disc_four/12.bob_marley_-_could_you_be_loved_(12"_mix).flac'
-          send_line 'Time: 327'
-          send_line 'Album: Songs Of Freedom - Disc Four'
-          send_line 'Artist: Bob Marley'
-          send_line 'Title: Could You Be Loved (12" Mix)'
-          send_line 'Track: 12'
-          send_line 'Pos: 11'
-          send_line 'Id: 6601'
+          song = @client.now_playing
+          if song
+            send_line "file: #{song['SongID']}.mp3"
+            send_line "Time: #{song['EstimateDuration']}"
+            send_line "Album: #{song['AlbumName']}"
+            send_line "Artist: #{song['ArtistName']}"
+            send_line "Title: #{song['SongName']}"
+            #send_line "Track: 12"
+            send_line "Pos: #{@pos}"
+            send_line "Id: #{song['SongID']}"
+          end
           send_line 'OK'
         
         when 'playlistinfo'
-          send_line 'file: albums/bob_marley/songs_of_freedom/disc_four/12.bob_marley_-_could_you_be_loved_(12"_mix).flac'
-          send_line 'Time: 327'
-          send_line 'Album: Songs Of Freedom - Disc Four'
-          send_line 'Artist: Bob Marley'
-          send_line 'Title: Could You Be Loved (12" Mix)'
-          send_line 'Track: 12'
-          send_line 'Pos: 11'
-          send_line 'Id: 6601'
+          @client.queue.songs.each_pair do |pos, song|
+            send_line "file: #{song['SongID']}.mp3"
+            send_line "Time: #{song['EstimateDuration']}"
+            send_line "Album: #{song['AlbumName']}"
+            send_line "Artist: #{song['ArtistName']}"
+            send_line "Title: #{song['SongName']}"
+            #send_line "Track: 12"
+            send_line "Pos: #{pos}"
+            send_line "Id: #{song['SongID']}"
+          end
           send_line 'OK'
         
         when 'lsinfo'
-          send_line 'file: albums/bob_marley/songs_of_freedom/disc_four/12.bob_marley_-_could_you_be_loved_(12"_mix).flac'
-          send_line 'Time: 327'
-          send_line 'Album: Songs Of Freedom - Disc Four'
-          send_line 'Artist: Bob Marley'
-          send_line 'Title: Could You Be Loved (12" Mix)'
-          send_line 'Track: 12'
-          send_line 'Pos: 11'
-          send_line 'Id: 6601'
+          @client.queue.songs.each_pair do |pos, song|
+            send_line "file: #{song['SongID']}.mp3"
+            send_line "Time: #{song['EstimateDuration']}"
+            send_line "Album: #{song['AlbumName']}"
+            send_line "Artist: #{song['ArtistName']}"
+            send_line "Title: #{song['SongName']}"
+            #send_line "Track: 12"
+            send_line "Pos: #{pos}"
+            send_line "Id: #{song['SongID']}"
+          end
+          send_line 'OK'
+        
+        when 'listallinfo'
+          args[1] =~ /^"([0-9]+)\.mp3"$/
+          id = $1.to_i
+          song = @client.queue.songs.values.find{|info| info['SongID'] == id }
+          
+          send_line "file: #{song['SongID']}.mp3"
+          send_line "Time: #{song['EstimateDuration']}"
+          send_line "Album: #{song['AlbumName']}"
+          send_line "Artist: #{song['ArtistName']}"
+          send_line "Title: #{song['SongName']}"
+          #send_line "Track: 12"
+          send_line "Pos: #{@client.queue.songs.values.index song}"
+          send_line "Id: #{song['SongID']}"
+          send_line 'OK'
+        
+        when 'plchanges'
+          @client.queue.songs.each_pair do |pos, song|
+            send_line "file: #{song['SongID']}.mp3"
+            send_line "Time: #{song['EstimateDuration']}"
+            send_line "Album: #{song['AlbumName']}"
+            send_line "Artist: #{song['ArtistName']}"
+            send_line "Title: #{song['SongName']}"
+            #send_line "Track: 12"
+            send_line "Pos: #{pos}"
+            send_line "Id: #{song['SongID']}"
+          end
+          send_line 'OK'
+        
+        when 'list'
+          @client.queue.songs.values.map{|song| song['ArtistName'] }.uniq.each do |artist|
+            send_line "Artist: #{artist}"
+          end
+          send_line 'OK'
+        
+        when 'search'
+          args[1..-1].join(' ') =~ /"([^"]*)"/
+          client.search_songs($1).each do |song|
+            send_line "file: #{song['SongID']}.mp3"
+            send_line "Time: #{song['EstimateDuration']}"
+            send_line "Album: #{song['AlbumName']}"
+            send_line "Artist: #{song['ArtistName']}"
+            send_line "Title: #{song['SongName']}"
+            #send_line "Track: 12"
+            #send_line "Pos: 11"
+            send_line "Id: #{song['SongID']}"
+          end
+        
+        when 'find'
+          songs = @client.queue.songs.values
+          
+          args[1..-1].join(' ').scan(/([a-z]+) "([^"]*)"/) do |type, param|
+            type = 'ArtistName' if type == 'artist'
+            type = 'AlbumName' if type == 'album'
+            $sock.puts "Request for songs where #{type} = #{param}"
+            songs.reject! {|song| song[type] != param }
+          end
+          
+          songs.each do |song|
+            send_line "file: #{song['SongID']}.mp3"
+            send_line "Time: #{song['EstimateDuration']}"
+            send_line "Album: #{song['AlbumName']}"
+            send_line "Artist: #{song['ArtistName']}"
+            send_line "Title: #{song['SongName']}"
+            #send_line "Track: 12"
+            #send_line "Pos: 11"
+            send_line "Id: #{song['SongID']}"
+          end
           send_line 'OK'
       end
+    
+    rescue => ex
+      $sock.puts ex, ex.message, ex.backtrace
     end
   end
 end
-
-EventMachine.run {
-  EventMachine::start_server "0.0.0.0", 8000, Remora::MPDConnection, nil
-  puts 'Ready.'
-}

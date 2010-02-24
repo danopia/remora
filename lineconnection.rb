@@ -16,11 +16,11 @@ class LineConnection < EventMachine::Connection
   def post_init
     sleep 0.25
     @port, @ip = Socket.unpack_sockaddr_in get_peername
-    puts "Connected to #{@ip}:#{@port}"
+    $sock.puts "Connected to #{@ip}:#{@port}"
   end
 		
   def send_line data
-    puts "==> #{data}"
+    $sock.puts "==> #{data}"
     send_data "#{data}\n"
   end
 
@@ -28,7 +28,7 @@ class LineConnection < EventMachine::Connection
     @buffer += data
     while @buffer.include? "\n"
       line = @buffer.slice!(0, @buffer.index("\n")+1).chomp
-      puts "<== #{line}"
+      $sock.puts "<== #{line}"
       receive_line line
     end
   end
@@ -37,7 +37,7 @@ class LineConnection < EventMachine::Connection
   end
   
   def unbind
-    puts "connection closed to #{@ip}:#{@port}"
+    $sock.puts "connection closed to #{@ip}:#{@port}"
   end
 end # class
 end # module

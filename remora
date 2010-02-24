@@ -37,6 +37,13 @@ client.use_aoss = true if ARGV.delete '--use-aoss'
 run_dbus client unless disable_dbus
 DRb.start_service 'druby://localhost:68739', client unless disable_drb
 
+load File.join(File.dirname(__FILE__), 'mpd.rb')
+Thread.new {
+  EventMachine.run {
+    EventMachine::start_server "0.0.0.0", 8000, Remora::MPDConnection, client
+  }
+}
+
 #~ puts "Enter a search query:"
 #~ query = gets.chomp
 #~ puts
