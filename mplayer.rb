@@ -37,8 +37,8 @@ class MPlayer
   end
   
   def close
-    @stream.close
-    @process.close
+    @stream.close rescue nil
+    @process.close rescue nil
     `rm #{@file}`
   end
 
@@ -134,7 +134,7 @@ class MPlayer
   
   def wait_for_exit
     @state = :waiting
-    @stream.close_write
+    @stream.close
     until @process.eof?
       handle_stdout
       sleep 0.1

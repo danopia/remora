@@ -125,7 +125,7 @@ begin
     elsif query == '/pause'
       client.player && client.player.pause
     elsif query =~ /^\/player (.+)$/
-      client.player && client.player.process.puts(query)
+      client.player && client.player.process.puts($1)
     else
       results = client.search_songs(query)
       display.panes[:main].controls[:results].data = results.map do |result|
