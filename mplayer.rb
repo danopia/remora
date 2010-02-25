@@ -1,10 +1,10 @@
 class MPlayer
   include DRbUndumped
   attr_reader :client, :buffer, :stream_buffer, :offset, :thread
-  attr_reader :stream, :state, :total_size, :streamed_size
+  attr_reader :stream, :process, :state, :total_size, :streamed_size
   attr_reader :position, :position_str, :length, :length_str
   
-  def self.play server, key, client=nil
+  def self.stream server, key, client=nil
     url = "http://#{server}/stream.php"
     url = URI.parse url
     http = Net::HTTP.new url.host, url.port
@@ -12,20 +12,34 @@ class MPlayer
     req.set_form_data({'streamKey' => key}, ';')
     mplayer = self.new client
     mplayer.play_from_http http, req
+    mplayer.close
   end
 
   def initialize client=nil
+    @file = "/tmp/remora-#{(rand*100000000).to_i}"
+    `mkfifo #{@file}` # TODO: do this nicer
     if client.use_aoss
-      @stream = IO.popen('aoss mplayer - -demuxer lavf 2>&1', 'w+')
+      @process = IO.popen("aoss mplayer #{@file} -demuxer lavf -slave 2>&1", 'w+')
     else
-      @stream = IO.popen('mplayer - -demuxer lavf 2>&1', 'w+')
+      @process = IO.popen("mplayer #{@file} -demuxer lavf -slave 2>&1", 'w+')
     end
+    @stream = File.open(@file, 'w')
     @buffer = ''
     @stream_buffer = ''
     @offset = 0
     @state = :uninited
     @client = client
     @client.player = self
+  end
+  
+  def pause
+    @process.puts 'pause'
+  end
+  
+  def close
+    @stream.close
+    @process.close
+    `rm #{@file}`
   end
 
   def time_to_s seconds
@@ -35,7 +49,7 @@ class MPlayer
   end
   
   def handle_stdout
-    @buffer += @stream.read_nonblock(1024).gsub("\r", "\n")
+    @buffer += @process.read_nonblock(1024).gsub("\r", "\n")
     
     while @buffer.include?("\n")
       line = @buffer.slice!(0, @buffer.index("\n") + 1).chomp
@@ -121,11 +135,11 @@ class MPlayer
   def wait_for_exit
     @state = :waiting
     @stream.close_write
-    until @stream.eof?
+    until @process.eof?
       handle_stdout
       sleep 0.1
     end
-    @stream.close
+    close
     @state = :complete
   end
 end
