@@ -3,6 +3,7 @@ class MPlayer
   attr_reader :client, :buffer, :stream_buffer, :offset, :thread
   attr_reader :stream, :process, :state, :total_size, :streamed_size
   attr_reader :position, :position_str, :length, :length_str
+  attr_accessor :paused
   
   def self.stream server, key, client=nil
     url = "http://#{server}/stream.php"
@@ -30,10 +31,12 @@ class MPlayer
     @state = :uninited
     @client = client
     @client.player = self
+    @paused = false
   end
   
   def pause
     @process.puts 'pause'
+    @paused = !@paused
   end
   
   def close

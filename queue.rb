@@ -70,17 +70,16 @@ class Queue
   end
 
   def play_radio
-    @songs.each_value do |song|
-      @client.play song
-    end
-    while true
-      song = add_autoplay
-      if song
-        @client.play song
+    @played = []
+    loop {
+      toplay = (@songs.keys - @played).first
+      if toplay
+        @played << toplay
+        @client.play @songs[toplay]
       else
-        sleep 2.5
+        raise "Server didn't give us a song" unless add_autoplay
       end
-    end
+    }
   end
 
   def play index

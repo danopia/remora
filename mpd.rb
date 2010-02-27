@@ -1,16 +1,23 @@
 require 'lineconnection'
 
-$sock ||= TCPSocket.new('localhost', 5465)
+begin
+  $sock ||= TCPSocket.new('localhost', 5465)
+rescue
+  $sock ||= File.open('/dev/null', 'w')
+end
 
 module Remora
   class MPDConnection < LineConnection
-    attr_accessor :client, :list_version, :list_hash
+    attr_accessor :client, :list_version, :list_hash, :songs
     
     def initialize client
       super
       @client = client
+      @db_version = 0
       @list_version = 0
       @list_hash = nil
+      
+      @songs = {}
       
       load __FILE__
     end
@@ -61,17 +68,20 @@ module Remora
           send_line "playlist: #{@list_version}"
           send_line "playlistlength: #{@client.queue.songs.size}"
           send_line 'xfade: 0'
-          send_line 'state: ' + (@client.now_playing ? 'play' : 'stop')
+          send_line 'state: ' + (@client.player ? (@client.player.paused ? 'pause' : 'play') : 'stop')
           
           if @client.now_playing && @client.player
-            send_line "song: #{@client.queue.songs.index @client.now_playing}"
+            send_line "song: #{@client.queue.songs.values.index @client.now_playing}"
             send_line "songid: #{@client.now_playing['SongID']}"
             send_line "time: #{@client.player.position}:#{@client.now_playing['EstimateDuration']}"
           end
           
           #~ send_line 'bitrate: 0'
           #~ send_line 'audio: 0:0:0'
-          #~ send_line 'updating_db: 0'
+          if @list_version > @db_version
+            @db_version = @list_version
+            send_line "updating_db: #{@db_version}"
+          end
           #~ send_line 'error: none'
           #~ send_line 'nextsong: 1'
           #~ send_line 'nextsongid: 1'
@@ -86,35 +96,39 @@ module Remora
             send_line "Artist: #{song['ArtistName']}"
             send_line "Title: #{song['SongName']}"
             #send_line "Track: 12"
-            send_line "Pos: #{@pos}"
+            send_line "Pos: #{@client.queue.songs.values.index song}"
             send_line "Id: #{song['SongID']}"
           end
           send_line 'OK'
         
         when 'playlistinfo'
-          @client.queue.songs.each_pair do |pos, song|
+          @client.queue.songs.values.each_with_index do |song, pos|
             send_line "file: #{song['SongID']}.mp3"
             send_line "Time: #{song['EstimateDuration']}"
             send_line "Album: #{song['AlbumName']}"
             send_line "Artist: #{song['ArtistName']}"
             send_line "Title: #{song['SongName']}"
             #send_line "Track: 12"
-            send_line "Pos: #{pos}"
+            send_line "Pos: #{pos-1}"
             send_line "Id: #{song['SongID']}"
           end
           send_line 'OK'
         
         when 'lsinfo'
-          @client.queue.songs.each_pair do |pos, song|
+          @client.queue.songs.values.each_with_index do |song, pos|
             send_line "file: #{song['SongID']}.mp3"
             send_line "Time: #{song['EstimateDuration']}"
             send_line "Album: #{song['AlbumName']}"
             send_line "Artist: #{song['ArtistName']}"
             send_line "Title: #{song['SongName']}"
             #send_line "Track: 12"
-            send_line "Pos: #{pos}"
+            send_line "Pos: #{pos-1}"
             send_line "Id: #{song['SongID']}"
           end
+          send_line 'OK'
+        
+        when 'pause'
+          @client.player.pause
           send_line 'OK'
         
         when 'listallinfo'
@@ -133,7 +147,7 @@ module Remora
           send_line 'OK'
         
         when 'plchanges'
-          @client.queue.songs.each_pair do |pos, song|
+          @client.queue.songs.values.each_with_index do |song, pos|
             send_line "file: #{song['SongID']}.mp3"
             send_line "Time: #{song['EstimateDuration']}"
             send_line "Album: #{song['AlbumName']}"
@@ -154,6 +168,7 @@ module Remora
         when 'search'
           args[1..-1].join(' ') =~ /"([^"]*)"/
           client.search_songs($1).each do |song|
+            @songs[song['SongID'].to_i] = song
             send_line "file: #{song['SongID']}.mp3"
             send_line "Time: #{song['EstimateDuration']}"
             send_line "Album: #{song['AlbumName']}"
@@ -163,6 +178,14 @@ module Remora
             #send_line "Pos: 11"
             send_line "Id: #{song['SongID']}"
           end
+          send_line 'OK'
+        
+        when 'add'
+          args[1] =~ /^"([0-9]+)\.mp3"$/
+          id = $1.to_i
+          song = @songs[id]
+          @client.queue << song
+          send_line 'OK'
         
         when 'find'
           songs = @client.queue.songs.values
