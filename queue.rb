@@ -77,7 +77,7 @@ class Queue
         @played << toplay
         @client.play @songs[toplay]
       else
-        raise "Server didn't give us a song" unless add_autoplay
+        return unless add_autoplay
       end
     }
   end
