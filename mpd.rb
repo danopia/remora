@@ -109,7 +109,7 @@ module Remora
             send_line "Artist: #{song['ArtistName']}"
             send_line "Title: #{song['SongName']}"
             #send_line "Track: 12"
-            send_line "Pos: #{pos-1}"
+            send_line "Pos: #{pos}"
             send_line "Id: #{song['SongID']}"
           end
           send_line 'OK'
@@ -125,6 +125,16 @@ module Remora
             send_line "Pos: #{pos-1}"
             send_line "Id: #{song['SongID']}"
           end
+          send_line 'OK'
+          
+        when 'stats'
+          send_line 'artists: 1'
+          send_line 'albums: 1'
+          send_line "songs: #{@client.queue.songs.size}"
+          send_line 'uptime: 360'
+          send_line 'playtime: 100'
+          send_line 'db_playtime: 500'
+          send_line "db_update: #{Time.now.to_i}"
           send_line 'OK'
         
         when 'pause'
