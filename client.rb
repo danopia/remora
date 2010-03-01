@@ -36,8 +36,17 @@ class Client
     
     # maybe they have a use :P
     puts "Have #{data['header']['alerts'].size} alerts" if data['header'] && data['header']['alerts'] && data['header']['alerts'].size != 2
-
-    data['result']
+    
+    return data['result'] unless data['fault']
+    
+    if data['fault']['code'] == 256
+      $sock.puts "Getting new token" if $sock
+      @comm_token = get_comm_token
+      sleep 1
+      return request(page, method, parameters)
+    end
+    
+    raise StandardError, "Grooveshark returned fault code #{data['fault']['code']}: #{data['fault']['message']}"
   end
   
   # These refer to the two different pages that cowbell uses.
