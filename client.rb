@@ -10,7 +10,7 @@ module GrooveShark
 class Client
   include DRbUndumped
   attr_accessor :session, :comm_token, :queue, :now_playing, :player, :display, :use_aoss
-  attr_reader :user_id, :username, :premium, :playlists
+  attr_reader :user_id, :username, :premium, :playlists, :favorites
   
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'
   CLIENT = 'gslite'
@@ -23,6 +23,7 @@ class Client
     
     @premium = false
     @playlists = {}
+    @favorites = []
   end
   
   def request page, method, parameters=nil, secure=false
@@ -86,16 +87,20 @@ class Client
     results
   end
   
-  # [{"PlaylistID"=>"22432605", "Name"=>"Country", "About"=>"", "Picture"=>""},
-  #  {"PlaylistID"=>"22671463", "Name"=>"Non-country", "About"=>"", "Picture"=>""}]
   def fetch_playlists
-    results = request_more('userGetPlaylists', :userID => @user_id)['Playlists']
+    results = request_more('userGetPlaylists', :userID => @user_id)
     
-    results.each do |result|
-      @playlists[result['PlaylistID']] = result
+    @playlists = results['Playlists'].map do |list|
+      Playlist.new self, list
     end
+  end
+  
+  def fetch_favorites
+    results = request_more 'getFavorites', :ofWhat => 'Songs', :userID => @user_id
     
-    results
+    @favorites = results#.map do |fav|
+    #  Song.new self, fav
+    #end
   end
   
   def get_comm_token

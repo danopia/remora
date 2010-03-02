@@ -26,6 +26,7 @@ if ARGV.any?
 end
 
 require File.join(File.dirname(__FILE__), 'client')
+require File.join(File.dirname(__FILE__), 'playlist')
 require File.join(File.dirname(__FILE__), 'mplayer')
 require File.join(File.dirname(__FILE__), 'ui')
 
@@ -102,6 +103,12 @@ begin
         
         client.auth creds[:user], creds[:pass]
         
+        $results = client.fetch_favorites
+        display.panes[:main].controls[:results].data = $results.map do |fav|
+          "#{fav['Name']} - #{fav['ArtistName']} - #{fav['AlbumName']}"
+        end
+        display.panes[:main].title = "Your Favorites"
+        
         display.panes.delete :alert
         display.active_control = display.panes[:main].controls[:search]
         display.dirty!
@@ -141,15 +148,15 @@ begin
     control :position, Remora::UI::Label, 1, 3, -1, 3
   end
   
-  results = nil
+  $results = nil
   display.panes[:main].controls[:search].on_submit do |box, query|
     next if query.empty?
 	
-    if query.to_i.to_s == query && results
+    if query.to_i.to_s == query && $results
       index = query.to_i - 1
-      next if index < 0 || index > results.size
+      next if index < 0 || index > $results.size
       
-      song = results[index]
+      song = $results[index]
       client.queue << song
       
       unless client.now_playing
@@ -172,13 +179,13 @@ begin
     elsif query =~ /^\/player (.+)$/
       client.player && client.player.process.puts($1)
     elsif query =~ /^\/raw ([^ ]+) ([^ ]+) (.*)$/
-      results = nil
+      $results = nil
       display.panes[:main].controls[:results].data = client.request($1, $2, eval($3)).inspect.lines.to_a.map{|l| l.chomp}
       display.panes[:main].title = "Results for #{$2} to #{$1}"
       display.dirty! :main
     else
-      results = client.search_songs(query)
-      display.panes[:main].controls[:results].data = results.map do |result|
+      $results = client.search_songs(query)
+      display.panes[:main].controls[:results].data = $results.map do |result|
         "#{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
       end
       display.panes[:main].title = "Search Results for #{query}"
