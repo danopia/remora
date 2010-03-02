@@ -60,6 +60,7 @@ class MPlayer
   end
   
   def handle_stdout
+    @last_pos ||= 0
     @buffer += @process.read_nonblock(1024).gsub("\r", "\n")
     
     while @buffer.include?("\n")
@@ -79,7 +80,11 @@ class MPlayer
       
       @client.display.panes[:np].controls[:cue].value2 = @position
       @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing.duration} (" + (@state == :playing ? "-#{time_to_s @client.now_playing.duration - @position})" : "#{@stream_buffer.size / 1024} / #{@total_size / 1024} KiB)")
-      @client.display.dirty! :np
+      
+      if @last_pos < @position
+        @client.display.dirty! :np
+        @last_pos = @position
+      end
     end
   rescue Errno::EAGAIN
   end
@@ -130,6 +135,8 @@ class MPlayer
             @client.display.dirty! :np
           end
           
+          last_report = 0
+          
           res.read_body do |chunk|
             if chunk.size > 0
               @stream_buffer << chunk
@@ -137,7 +144,12 @@ class MPlayer
               
               @client.display.panes[:np].controls[:cue].value = @stream_buffer.size
               @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing.duration} (#{@stream_buffer.size / 1024} / #{@total_size / 1024} KiB)"
-              @client.display.dirty! :np
+              
+              last_report += chunk.size
+              if last_report > 102400
+                @client.display.dirty! :np
+                last_report -= 102400
+              end
             end
           end
           
