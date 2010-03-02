@@ -78,7 +78,7 @@ class MPlayer
       end
       
       @client.display.panes[:np].controls[:cue].value2 = @position
-      @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (" + (@state == :playing ? "-#{time_to_s @client.now_playing['EstimateDuration'].to_i - @position})" : "#{@stream_buffer.size / 1024} / #{@total_size / 1024} KiB)")
+      @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing.duration} (" + (@state == :playing ? "-#{time_to_s @client.now_playing.duration - @position})" : "#{@stream_buffer.size / 1024} / #{@total_size / 1024} KiB)")
       @client.display.dirty! :np
     end
   rescue Errno::EAGAIN
@@ -86,8 +86,14 @@ class MPlayer
 
   def play_from_http http, req
     @thread = Thread.new do
-      stream_from_http http, req
-      @state = :playing
+      begin
+        stream_from_http http, req
+        @state = :playing
+      rescue => ex
+        $display.undo_modes
+        puts ex.class, ex.message, ex.backtrace
+        exit
+      end
     end
     
     sleep 0.1 until @total_size && @total_size > 0
@@ -104,44 +110,53 @@ class MPlayer
     
     wait_for_exit
     
-  rescue IOError, Errno::EPIPE
+  rescue IOError, Errno::EPIPE => ex
+    $display.undo_modes
+    puts ex.class, ex.message, ex.backtrace
     close rescue nil
+    exit
   end
 
   def stream_from_http http, req
     @thread = Thread.new do
-      http.request(req) do |res|
-        @state = :starting_stream
-        @total_size = res.header['Content-Length'].to_i
-        
-        if @total_size && @total_size > 0
-          @client.display.panes[:np].controls[:cue].maximum = @total_size
-          @client.display.panes[:np].controls[:cue].value = 0
-          @client.display.dirty! :np
-        end
-        
-        res.read_body do |chunk|
-          if chunk.size > 0
-            @stream_buffer << chunk
-            @state = :streaming
-            
-            @client.display.panes[:np].controls[:cue].value = @stream_buffer.size
-            @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing['EstimateDuration']} (#{@stream_buffer.size / 1024} / #{@total_size / 1024} KiB)"
+      begin
+        http.request(req) do |res|
+          @state = :starting_stream
+          @total_size = res.header['Content-Length'].to_i
+          
+          if @total_size && @total_size > 0
+            @client.display.panes[:np].controls[:cue].maximum = @total_size
+            @client.display.panes[:np].controls[:cue].value = 0
             @client.display.dirty! :np
           end
+          
+          res.read_body do |chunk|
+            if chunk.size > 0
+              @stream_buffer << chunk
+              @state = :streaming
+              
+              @client.display.panes[:np].controls[:cue].value = @stream_buffer.size
+              @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing.duration} (#{@stream_buffer.size / 1024} / #{@total_size / 1024} KiB)"
+              @client.display.dirty! :np
+            end
+          end
+          
+          case res
+            when Net::HTTPSuccess
+              #puts "success"
+            when Net::HTTPRedirection
+              url = URI.parse(res['location'])
+              stream_from_http Net::HTTP.new(url.host, url.port), Net::HTTP::Get.new(url.request_uri, {'Cookie' => "PHPSESSID=#{$session}"})
+              break
+            else
+              puts "error!"
+              exit
+          end
         end
-        
-        case res
-          when Net::HTTPSuccess
-            #puts "success"
-          when Net::HTTPRedirection
-            url = URI.parse(res['location'])
-            stream_from_http Net::HTTP.new(url.host, url.port), Net::HTTP::Get.new(url.request_uri, {'Cookie' => "PHPSESSID=#{$session}"})
-            return
-          else
-            puts "error!"
-            exit
-        end
+      rescue => ex
+        $display.undo_modes
+        puts ex.class, ex.message, ex.backtrace
+        exit
       end
     end
   end

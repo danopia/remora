@@ -42,11 +42,8 @@ class Playlist
   end
   
   def load_songs
-    @songs = client.request_more('playlistGetSongs', :playlistID => @id)['Songs']
-    
-    #~ songs.map do |song|
-      #~ Song.new song, self
-    #~ end
+    @songs = @client.request_more('playlistGetSongs', :playlistID => @id)['Songs']
+    @songs.map! {|song| Song.new song }
   end
 end
 end

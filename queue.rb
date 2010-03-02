@@ -17,10 +17,10 @@ class Queue
   def << song
     @client.request_service 'addSongsToQueueExt', {
       'songIDsArtistIDs' => [{
-        'artistID' => song['ArtistsID'],
-        'songID' => song['SongID'],
+        'artistID' => song.data['ArtistsID'],
+        'songID' => song.id,
         'songQueueSongID' => @next_index,
-        'source' => song['source'] || 'user',
+        'source' => song.source,
       }],
       'songQueueID' => @id
     }
@@ -35,9 +35,7 @@ class Queue
   
   def redraw_queue
     return unless @client.display
-    @client.display.panes[:queue].controls[:songs].data = @songs.map do |(index, song)|
-      song['SongName'] || song['Name']
-    end
+    @client.display.panes[:queue].controls[:songs].data = @order.map {|song| song.to_s }
     @client.display.dirty! :queue
   end
   
@@ -50,7 +48,7 @@ class Queue
       'userRemoved' => true,
       'songQueueID' => @id
     }
-    @songs.delete index
+    @order.delete @songs[index]
     @songs.delete index
     
     redraw_queue
@@ -62,10 +60,10 @@ class Queue
   
   def pick_autoplay
     seeds = {}
-    @order.last(5).each {|song| seeds[song['ArtistID'].to_s] = 'p' }
+    @order.last(5).each {|song| seeds[song.data['ArtistID'].to_s] = 'p' }
     
-    @client.request_service 'getSongForAutoplayExt', {
-      'recentSongs' => @order.last(5).map{|song| song['SongID'] },
+    Song.new @client.request_service('getSongForAutoplayExt', {
+      'recentSongs' => @order.last(5).map{|song| song.id },
       'secondaryArtistWeightModifier' => 0.9,
       'seedArtistWeightRange' => [70, 100],
       'maxDuration' => 1500,
@@ -75,7 +73,7 @@ class Queue
       'recentArtists' => seeds.keys,
       'seeds' => seeds,
       'songQueueID' => @id
-    }
+    })
   end
   
   def [] index
@@ -88,6 +86,7 @@ class Queue
       toplay = (@songs.keys - @played).first
       if toplay
         @played << toplay
+        $sock.puts @songs[toplay].inspect
         @client.play @songs[toplay]
       else
         return unless add_autoplay

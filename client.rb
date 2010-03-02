@@ -97,17 +97,15 @@ class Client
   
   def fetch_favorites
     results = request_more 'getFavorites', :ofWhat => 'Songs', :userID => @user_id
-    
-    @favorites = results#.map do |fav|
-    #  Song.new self, fav
-    #end
+    @favorites = results.map {|song| Song.new song }
   end
   
   def get_comm_token
     @comm_token = nil # so that it doesn't send a token
-    @comm_token = request_service 'getCommunicationToken', {'secretKey' => Digest::MD5.hexdigest(@session)}, true
+    @comm_token = request_service 'getCommunicationToken', {:secretKey => Digest::MD5.hexdigest(@session)}, true
   end
   
+  # shhhhhhh!
   def create_token method
     rnd = rand(256**3).to_s(16).rjust(6, '0')
     plain = [method, @comm_token, 'theColorIsRed', rnd].join(':')
@@ -116,32 +114,31 @@ class Client
   end
   
   def search type, query
-    request_more 'getSearchResults', {:type => type, :query => query}
+    results = request_more 'getSearchResults', {:type => type, :query => query}
+    results.map {|song| Song.new song }
   end
   def search_songs query
     search 'Songs', query
   end
   
   # streamKey, streamServer, streamServerID
-  def get_stream_auth song_id
-    data = request_more 'getStreamKeyFromSongID', {"songID" => song_id, "prefetch" => false}
-    data['result']
+  def get_stream_auth song
+    results = request_more 'getStreamKeyFromSongID', {"songID" => song.id, "prefetch" => false}
+    results['result']
   end
   
-  def play song_info
-    @display.panes[:np].controls[:song_name].text = "#{song_info['SongName'] || song_info['Name']} - #{song_info['ArtistName']} - #{song_info['AlbumName']}"
+  def play song
+    @display.panes[:np].controls[:song_name].text = song.to_s
     @display.panes[:np].controls[:cue].value = 0
     @display.panes[:np].controls[:cue].maximum = 1
     @display.panes[:np].controls[:cue].value2 = 0
-    @display.panes[:np].controls[:cue].maximum2 = song_info['EstimateDuration'].to_i
+    @display.panes[:np].controls[:cue].maximum2 = song.duration
     @display.dirty! :np
     
-    @now_playing = song_info
-    key = get_stream_auth song_info['SongID']
+    @now_playing = song
+    key = get_stream_auth song
     MPlayer.stream key['streamServer'], key['streamKey'], self
     @now_playing = nil
-    
-    
   end
 end
 end

@@ -27,6 +27,7 @@ end
 
 require File.join(File.dirname(__FILE__), 'client')
 require File.join(File.dirname(__FILE__), 'playlist')
+require File.join(File.dirname(__FILE__), 'song')
 require File.join(File.dirname(__FILE__), 'mplayer')
 require File.join(File.dirname(__FILE__), 'ui')
 
@@ -63,7 +64,7 @@ Thread.new {
   #~ client.queue.play_radio
 #~ end
 
-display = client.display = Remora::UI::Display.new(client)
+$display = display = client.display = Remora::UI::Display.new(client)
 
 trap 'INT' do
   display.undo_modes
@@ -104,9 +105,7 @@ begin
         client.auth creds[:user], creds[:pass]
         
         $results = client.fetch_favorites
-        display.panes[:main].controls[:results].data = $results.map do |fav|
-          "#{fav['Name']} - #{fav['ArtistName']} - #{fav['AlbumName']}"
-        end
+        display.panes[:main].controls[:results].data = $results.map {|fav| fav.to_s }
         display.panes[:main].title = "Your Favorites"
         
         display.panes.delete :alert
@@ -185,9 +184,7 @@ begin
       display.dirty! :main
     else
       $results = client.search_songs(query)
-      display.panes[:main].controls[:results].data = $results.map do |result|
-        "#{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
-      end
+      display.panes[:main].controls[:results].data = $results.map {|song| song.to_s }
       display.panes[:main].title = "Search Results for #{query}"
       display.dirty! :main
     end
