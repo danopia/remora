@@ -1,14 +1,17 @@
 module GrooveShark
 class Queue
   include DRbUndumped
-  attr_accessor :songs, :next_index, :id, :client
+  attr_accessor :songs, :order, :next_index, :id, :client
   
   def initialize client
     @client = client
     @id = @client.request_service 'initiateQueueEx'
     
     @songs = {}
+    @order = []
     @next_index = 1
+    
+    redraw_queue
   end
   
   def << song
@@ -22,14 +25,20 @@ class Queue
       'songQueueID' => @id
     }
     @songs[@next_index] = song
+    @order << song
     @next_index += 1
     
+    redraw_queue
+    
+    @next_index - 1
+  end
+  
+  def redraw_queue
+    return unless @client.display
     @client.display.panes[:queue].controls[:songs].data = @songs.map do |(index, song)|
       song['SongName'] || song['Name']
     end
     @client.display.dirty! :queue
-    
-    @next_index - 1
   end
   
   def delete song
@@ -42,28 +51,31 @@ class Queue
       'songQueueID' => @id
     }
     @songs.delete index
+    @songs.delete index
+    
+    redraw_queue
   end
   
   def add_autoplay
+    self << pick_autoplay
+  end
+  
+  def pick_autoplay
     seeds = {}
-    @songs.values.last(5).each {|song| seeds[song['ArtistID'].to_s] = 'p' }
+    @order.last(5).each {|song| seeds[song['ArtistID'].to_s] = 'p' }
     
-    song = @client.request_service 'getSongForAutoplayExt', {
-      'recentSongs' => @songs.values.last(5).map{|song| song['SongID'] },
+    @client.request_service 'getSongForAutoplayExt', {
+      'recentSongs' => @order.last(5).map{|song| song['SongID'] },
       'secondaryArtistWeightModifier' => 0.9,
       'seedArtistWeightRange' => [70, 100],
       'maxDuration' => 1500,
       'minDuration' => 60,
       'weightModifierRange' => [-9, 9],
       'frowns' => [],
-      'recentArtists' => @songs.values.last(5).map{|song| song['ArtistID'] },
+      'recentArtists' => seeds.keys,
       'seeds' => seeds,
       'songQueueID' => @id
     }
-    #{"SongID":15220333,"AlbumID":1179236,"ArtistID":1587,"ArtistName":"Toby Keith","AlbumName":"Shock'n Y'all","CoverArtUrl":"http:\/\/beta.grooveshark.com\/static\/amazonart\/s11811240.jpg","EstimateDuration":263,"SponsoredAutoplayID":0,"SongName":"American Soldier","source":"recommended"}
-    
-    self << song if song
-    song
   end
   
   def [] index

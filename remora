@@ -165,6 +165,8 @@ begin
       end
     elsif query == '/pause'
       client.player && client.player.pause
+    elsif query == '/stop'
+      client.player && client.player.stop
     elsif query == '/login'
       create_login_dialog client
     elsif query =~ /^\/player (.+)$/
