@@ -39,10 +39,18 @@ class MPlayer
     @paused = !@paused
   end
   
+  def stop
+    @process.puts 'stop'
+    @client.player = nil
+    close
+    @client.now_playing = nil
+  end
+  
   def close
+    @thread.kill rescue nil
     @stream.close rescue nil
     @process.close rescue nil
-    `rm #{@file}`
+    `rm #{@file}` if File.exists? @file
   end
 
   def time_to_s seconds
@@ -56,10 +64,10 @@ class MPlayer
     
     while @buffer.include?("\n")
       line = @buffer.slice!(0, @buffer.index("\n") + 1).chomp
-      if line =~ /^A: +([0-9.]+) \(([0-9.:]+)\) of ([0-9.]+) \(([0-9.:]+)\)  ([0-9.,?]+)%/
+      if line =~ /^A: +([0-9.]+) \(([0-9.:]+)\) of ([0-9.]+) \(([0-9.:]+)\) +([0-9.,?]+)%/
         @position, @position_str = $1.to_i, $2
         @length, @length_str = $3.to_i, $4
-      elsif line =~ /^A: +([0-9.]+) \(([0-9.:]+)\) of 0\.0 \(unknown\)  ([0-9.,?]+)%/
+      elsif line =~ /^A: +([0-9.]+) \(([0-9.:]+)\) of 0\.0 \(unknown\) +([0-9.,?]+)%/
         @position, @position_str = $1.to_i, $2
       else
         control = @client.display.panes[:log].controls[:output]
@@ -95,6 +103,9 @@ class MPlayer
     end
     
     wait_for_exit
+    
+  rescue IOError, Errno::EPIPE
+    close rescue nil
   end
 
   def stream_from_http http, req
