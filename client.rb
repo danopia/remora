@@ -117,18 +117,6 @@ class Client
     search 'Songs', query
   end
   
-  def enqueue song_id, artist_id
-    request_service 'addSongsToQueueExt', {
-      'songIDsArtistIDs' => [{
-        'songID' => song_id,
-        'songQueueSongID' => 1,
-        'artistID' => artist_id,
-        'source' => 'user',
-      }],
-      'songQueueID' => @queue,
-    }
-  end
-  
   # streamKey, streamServer, streamServerID
   def get_stream_auth song_id
     data = request_more 'getStreamKeyFromSongID', {"songID" => song_id, "prefetch" => false}

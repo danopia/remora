@@ -12,6 +12,7 @@ class JSONSock
     req = Net::HTTP::Post.new url.path, {'Content-type' => 'application/json', 'Cookie' => "PHPSESSID=#{$session}"}
     http.use_ssl = true if url.port == 443
     res = http.request req, data.to_json
+    $sock.puts res.body if $sock
     JSON.parse res.body
   end
 end

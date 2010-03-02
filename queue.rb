@@ -23,12 +23,13 @@ class Queue
     }
     @songs[@next_index] = song
     @next_index += 1
-    #@next_index - 1
     
     @client.display.panes[:queue].controls[:songs].data = @songs.map do |(index, song)|
       song['SongName'] || song['Name']
     end
     @client.display.dirty! :queue
+    
+    @next_index - 1
   end
   
   def delete song
