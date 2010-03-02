@@ -10,6 +10,7 @@ module GrooveShark
 class Client
   include DRbUndumped
   attr_accessor :session, :comm_token, :queue, :now_playing, :player, :display, :use_aoss
+  attr_reader :user_id, :username, :premium, :playlists
   
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'
   CLIENT = 'gslite'
@@ -17,22 +18,28 @@ class Client
   
   def initialize session=nil
     @session = session || get_session
-    @comm_token = get_comm_token
+    get_comm_token
     @queue = Queue.new self
+    
+    @premium = false
+    @playlists = {}
   end
   
-  def request page, method, parameters=nil
-    data = GrooveShark::JSONSock.post "http://cowbell.grooveshark.com/#{page}.php?#{method}", {
+  def request page, method, parameters=nil, secure=false
+    url = "http#{secure ? 's' : ''}://cowbell.grooveshark.com/#{page}.php?#{method}"
+    request = {
       'header' => {
-        'token' => create_token(method),
         'session' => @session,
         'uuid' => UUID,
         'client' => CLIENT,
         'clientRevision' => CLIENT_REV,
       },
-      'parameters' => parameters,
       'method' => method,
+      'parameters' => parameters,
     }
+    request['header']['token'] = create_token(method) if @comm_token
+    
+    data = GrooveShark::JSONSock.post url, request
     
     # maybe they have a use :P
     puts "Have #{data['header']['alerts'].size} alerts" if data['header'] && data['header']['alerts'] && data['header']['alerts'].size != 2
@@ -41,12 +48,13 @@ class Client
     
     if data['fault']['code'] == 256
       $sock.puts "Getting new token" if $sock
-      @comm_token = get_comm_token
+      get_comm_token
       sleep 1
       return request(page, method, parameters)
     end
     
-    raise StandardError, "Grooveshark returned fault code #{data['fault']['code']}: #{data['fault']['message']}"
+    $sock.puts "Grooveshark returned fault code #{data['fault']['code']}: #{data['fault']['message']}"
+    nil
   end
   
   # These refer to the two different pages that cowbell uses.
@@ -63,21 +71,36 @@ class Client
     $1
   end
   
+  # {"userID":1839825,"username":"danopia","isPremium":"0",
+  # "autoAutoplay":false,"authRealm":1,"favoritesLimit":500,
+  # "librarySizeLimit":5000,"uploadsEnabled":1,"themeID":""}
+  def auth user, pass
+    results = request_service 'authenticateUserEx', {:username => 'danopia', :password => 'nSlpxQKo'}, true
+    
+    @user_id = results['userID']
+    @username = results['username']
+    @premium = results['isPremium']
+    
+    fetch_playlists
+    
+    results
+  end
+  
+  # [{"PlaylistID"=>"22432605", "Name"=>"Country", "About"=>"", "Picture"=>""},
+  #  {"PlaylistID"=>"22671463", "Name"=>"Non-country", "About"=>"", "Picture"=>""}]
+  def fetch_playlists
+    results = request_more('userGetPlaylists', :userID => @user_id)['Playlists']
+    
+    results.each do |result|
+      @playlists[result['PlaylistID']] = result
+    end
+    
+    results
+  end
+  
   def get_comm_token
-    data = GrooveShark::JSONSock.post 'https://cowbell.grooveshark.com/service.php', {
-      'header' => {
-        'session' => @session,
-        'uuid' => UUID,
-        'client' => CLIENT,
-        'clientRevision' => CLIENT_REV,
-      },
-      'parameters' => {
-        'secretKey' => Digest::MD5.hexdigest(@session),
-      },
-      'method' => 'getCommunicationToken'
-    }
-
-    data['result']
+    @comm_token = nil # so that it doesn't send a token
+    @comm_token = request_service 'getCommunicationToken', {'secretKey' => Digest::MD5.hexdigest(@session)}, true
   end
   
   def create_token method
