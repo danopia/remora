@@ -47,9 +47,10 @@ class TextBox < Label
   
   def handle_char char
     if char == "\n" && !@multiline
+      text = value
       @text = ''
       redraw
-      handler.call self, value if handler
+      handler.call self, text if handler
       return
     elsif char == "\177"
       @text.slice! -1
