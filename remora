@@ -70,6 +70,47 @@ trap 'INT' do
 end
 
 begin
+  def create_login_dialog client
+    display = client.display
+    
+    display.alert 30, 8, 'Login to Grooveshark' do
+      display.active_control = control :user, Remora::UI::TextBox, 3, 2, -3, 2 do
+        self.label = 'Username'
+        self.text = ''
+      end
+      control :pass, Remora::UI::TextBox, 3, 4, -3, 4 do
+        self.label = 'Password'
+        self.text = ''
+        self.mask = '*'
+      end
+      control :submit, Remora::UI::Button, 10, 6, -10, 6 do
+        self.text = 'Login'
+        self.alignment = :center
+      end
+        
+      on_submit do
+        creds = yank_values
+        
+        display.panes.delete :alert
+        display.alert 30, 3, 'Login to Grooveshark' do
+          control :status, Remora::UI::Label, 1, 2, -1, 2 do
+            self.text = 'Processing...'
+            self.alignment = :center
+          end
+        end
+        display.dirty!
+        
+        client.auth creds[:user], creds[:pass]
+        
+        display.panes.delete :alert
+        display.active_control = display.panes[:main].controls[:search]
+        display.dirty!
+      end
+    end
+    
+    display.dirty!
+  end
+  
   display.pane :queue, 1, 1, 20, -1, 'Queue' do
     control :songs, Remora::UI::ListBox, 1, 1, -1, -1 do
       number!
@@ -124,8 +165,15 @@ begin
       end
     elsif query == '/pause'
       client.player && client.player.pause
+    elsif query == '/login'
+      create_login_dialog client
     elsif query =~ /^\/player (.+)$/
       client.player && client.player.process.puts($1)
+    elsif query =~ /^\/raw ([^ ]+) ([^ ]+) (.*)$/
+      results = nil
+      display.panes[:main].controls[:results].data = client.request($1, $2, eval($3)).inspect.lines.to_a.map{|l| l.chomp}
+      display.panes[:main].title = "Results for #{$2} to #{$1}"
+      display.dirty! :main
     else
       results = client.search_songs(query)
       display.panes[:main].controls[:results].data = results.map do |result|
