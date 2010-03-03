@@ -34,8 +34,8 @@ class Queue
   end
   
   def redraw_queue
-    return unless @client.display
-    @client.display.panes[:queue].controls[:songs].data = @order.map {|song| song.to_s }
+    return unless @client && @client.display
+    @client.display.panes[:queue].controls[:songs].data = @order.map {|song| song.title }
     @client.display.dirty! :queue
   end
   
