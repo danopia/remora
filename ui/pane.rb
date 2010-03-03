@@ -76,35 +76,36 @@ class Pane
       control.redraw
     end
   end
-  
-  def topbar
-    title = " * #{@title} * "
-    left = (((width - 1).to_f / 2) - (title.size.to_f / 2)).to_i
-
-    if title.size >= width
-      "#{@display.color '1;34'} #{@title[0, width - 3].center(width - 3)} #{@display.color '0;2'}"
-    else
-      title_colored = "#{@display.color '1;34'}#{title}#{@display.color '0;2'}"
-      ('q' * left) + title_colored + ('q' * (width - 1 - title.size - left))
-    end
-  end
 
   def draw_frame
-    bottombar = 'q' * (width - 1)
+    linebar = 'q' * (width - 1)
     fillerbar = ' ' * (width - 1)
 
     @display.linedrawing = true
     print @display.color('0;2')
-    @display.place y1, x1, "n#{topbar}n"
-    @display.place y2, x1, "n#{bottombar}n"
+    @display.place y1, x1, "n#{linebar}n"
+    @display.place y2, x1, "n#{linebar}n"
     #~ @display.place y1, x1, "l#{topbar}k"
     #~ @display.place y2, x1, "m#{bottombar}j"
 
     (y1 + 1).upto y2 - 1 do |row|
       @display.place row, x1, "x#{fillerbar}x"
     end
-    print @display.color('0')
     @display.linedrawing = false
+    
+    # Now draw the title
+    title = " * #{@title} * "
+    left = (((width - 1).to_f / 2) - (title.size.to_f / 2)).to_i
+
+    if title.size >= width
+      title = @title[0, width - 3]
+      left = 0
+    end
+    
+    print @display.color('1;34')
+    @display.place y1, x1 + 1 + left, title
+    print @display.color('0')
+    
   end
 end
 end
