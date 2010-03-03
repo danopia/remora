@@ -95,8 +95,10 @@ class Pane
 
     @display.linedrawing = true
     print @display.color('0;2')
-    @display.place y1, x1, "l#{topbar}k"
-    @display.place y2, x1, "m#{bottombar}j"
+    @display.place y1, x1, "n#{topbar}n"
+    @display.place y2, x1, "n#{bottombar}n"
+    #~ @display.place y1, x1, "l#{topbar}k"
+    #~ @display.place y2, x1, "m#{bottombar}j"
 
     (y1 + 1).upto y2 - 1 do |row|
       @display.place row, x1, "x#{fillerbar}x"
