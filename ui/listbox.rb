@@ -1,7 +1,7 @@
 module Remora
 module UI
 class ListBox < Control
-  attr_accessor :data, :numbering, :hanging_indent
+  attr_accessor :data, :numbering, :hanging_indent, :offset, :index
   
   def on_submit &blck
     @handler = blck
@@ -15,6 +15,7 @@ class ListBox < Control
     @data = []
     @hanging_indent = 0
     @offset = 0
+    @index = 0
     super
   end
   
@@ -57,7 +58,7 @@ class ListBox < Control
   end
   
   def fit_data_back
-    lines = 0
+    lines = -1
     items = 0
     
     data[([@offset - height,0].max)..([@offset,0].max)].reverse.each do |line|
@@ -77,15 +78,21 @@ class ListBox < Control
     row = y1
     data[@offset, height].each_with_index do |line, index|
       line = line.to_s
-      line = "#{(index + @offset + 1).to_s.rjust 2}. #{line}" if @numbering
+      number = index + @offset + 1
+      line = "#{number.to_s.rjust 2}. #{line}" if @numbering
+      print @display.color '1;34' if number == @index + 1
       length = line.size
       offset = 0
       while offset < length || offset == 0
         @display.place row, x1, ((' ' * ((offset > 0) ? @hanging_indent : 0)) + line[offset, width - ((offset > 0) ? @hanging_indent : 0)]).ljust(width, ' ')
         row += 1
         offset += width - ((offset > 0) ? @hanging_indent : 0)
-        break if row >= y2
+        if row >= y2
+          print @display.color '0' if number == @index + 1
+          break
+        end
       end
+      print @display.color '0' if number == @index + 1
       break if row >= y2
     end
     
@@ -99,13 +106,19 @@ class ListBox < Control
     if char == "\n"
       handler.call self, nil if handler
     elsif char == :up
-      @offset -= 1 if @offset > 0
+      @index -= 1 if @index > 0
+      @offset -= 1 if @offset > @index
     elsif char == :down
-      @offset += 1 if @offset < @data.size - 1
+      if @index < @data.size - 1
+        @index += 1 
+        @offset += 1 if @offset + fit_data[1] <= @index
+      end
     elsif char == :pageup
       @offset = [0, @offset - fit_data_back[1]].max
+      @index = [@offset + fit_data[1] - 1, @index].min
     elsif char == :pagedown
       @offset = [@data.size - 1, @offset + fit_data[1]].min
+      @index = [@offset, @index].max
     end
     redraw
   end
