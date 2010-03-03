@@ -35,6 +35,11 @@ class Display
     $stdout.flush
   end
   
+  def linedrawing=(toggle)
+    print "\x0E\e)0" if toggle
+    print "\x0F" unless toggle
+  end
+  
   def dirty! pane=nil
     if pane
       @panes[pane].dirty!
@@ -179,6 +184,7 @@ class Display
   def undo_modes # restore previous terminal mode
     $stdout.ioctl(TCSETS, @old_modes.pack("IIIICCA*"))
     print "\e[2J\e[H" # clear all and go home
+    self.linedrawing = false
     self.cursor = true # show the mouse
   end
 end

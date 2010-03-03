@@ -6,6 +6,7 @@ class TextBox < Label
   def initialize *args
     @label = ''
     @text = 'Input box'
+    
     super
   end
   
