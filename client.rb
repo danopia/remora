@@ -139,6 +139,7 @@ class Client
     key = get_stream_auth song
     MPlayer.stream key['streamServer'], key['streamKey'], self
     @now_playing = nil
+    @player = nil
   end
 end
 end
