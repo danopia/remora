@@ -69,6 +69,7 @@ class Pane
   def redraw
     draw_frame
     draw_contents
+    draw_title
   end
   
   def draw_contents
@@ -83,6 +84,7 @@ class Pane
 
     @display.linedrawing = true
     print @display.color('0;2')
+    
     @display.place y1, x1, "n#{linebar}n"
     @display.place y2, x1, "n#{linebar}n"
     #~ @display.place y1, x1, "l#{topbar}k"
@@ -91,9 +93,12 @@ class Pane
     (y1 + 1).upto y2 - 1 do |row|
       @display.place row, x1, "x#{fillerbar}x"
     end
-    @display.linedrawing = false
     
-    # Now draw the title
+    @display.linedrawing = false
+    print @display.color('0')
+  end
+
+  def draw_title
     title = " * #{@title} * "
     left = (((width - 1).to_f / 2) - (title.size.to_f / 2)).to_i
 
@@ -105,7 +110,6 @@ class Pane
     print @display.color('1;34')
     @display.place y1, x1 + 1 + left, title
     print @display.color('0')
-    
   end
 end
 end

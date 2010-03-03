@@ -60,6 +60,54 @@ class Display
     self.active_control = self[*path]
   end
   
+  def handle
+    handle_stdin
+    
+    size = terminal_size
+    if @width != size[1] || @height != size[0]
+      @width = size[1]
+      @height = size[0]
+      dirty!
+    end
+    
+    if @dirty
+      redraw
+      @dirty = false
+    else
+      panes = @panes.values.select {|pane| pane.dirty? && pane.visible? }
+      redraw panes if panes.any?
+    end
+    @panes.each_value {|pane| pane.dirty = false }
+  end
+  
+  def redraw panes=nil
+    print "\e[H\e[J" unless panes # clear all and go home
+    
+    panes ||= @panes.values
+    panes.each {|pane| pane.redraw if pane.visible? }
+    @panes.each_value {|pane| pane.draw_title if pane.visible? }
+    print "\e[u"
+    
+    $stdout.flush
+  end
+  
+  def active_control= control
+    @active_pane = control.pane
+    @active_control = control
+  end
+  
+  def cycle_controls
+    index = @active_pane.controls.keys.index @active_pane.controls.key(@active_control)
+    begin
+      index += 1
+      index = 0 if index >= @active_pane.controls.size
+    end until @active_pane.controls[@active_pane.controls.keys[index]].respond_to? :handle_char
+    old = @active_control
+    @active_control = @active_pane.controls[@active_pane.controls.keys[index]]
+    old.redraw
+    @active_control.redraw
+  end
+  
   # \e[Z      shift-tab
   #
   # \e[A      up
@@ -86,54 +134,7 @@ class Display
   # ctrl-stuff becomes weird stuff, i.e. ctrl-space = \x00, ctrl-a = \x01, ctrl-b = \x02
   #
   # super is not sent?
-  
-  def handle
-    handle_stdin
-    
-    size = terminal_size
-    if @width != size[1] || @height != size[0]
-      @width = size[1]
-      @height = size[0]
-      dirty!
-    end
-    
-    if @dirty
-      redraw
-      @dirty = false
-    else
-      panes = @panes.values.select {|pane| pane.dirty? && pane.visible? }
-      redraw panes if panes.any?
-    end
-    @panes.each_value {|pane| pane.dirty = false }
-  end
-  
-  def redraw panes=nil
-    print "\e[H\e[J" unless panes # clear all and go home
-    
-    panes ||= @panes.values
-    panes.each {|pane| pane.redraw if pane.visible? }
-    print "\e[u"
-    
-    $stdout.flush
-  end
-  
-  def active_control= control
-    @active_pane = control.pane
-    @active_control = control
-  end
-  
-  def cycle_controls
-    index = @active_pane.controls.keys.index @active_pane.controls.key(@active_control)
-    begin
-      index += 1
-      index = 0 if index >= @active_pane.controls.size
-    end until @active_pane.controls[@active_pane.controls.keys[index]].respond_to? :handle_char
-    old = @active_control
-    @active_control = @active_pane.controls[@active_pane.controls.keys[index]]
-    old.redraw
-    @active_control.redraw
-  end
-  
+  #
   def handle_stdin
     $stdin.read_nonblock(1024).each_char do |chr|
       if chr == "\t"
