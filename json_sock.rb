@@ -21,10 +21,14 @@ class JSONSock
   
   def post url, data
     url = @uri + URI.parse(url)
-    req = Net::HTTP::Post.new url.request_uri, {'Content-type' => 'application/json', 'Cookie' => "PHPSESSID=#{@session}"}
+    req = Net::HTTP::Post.new url.request_uri, headers
     res = @http.request req, data.to_json
     $sock.puts res.body if $sock
     JSON.parse res.body
+  end
+  
+  def headers
+    {'Content-type' => 'application/json', 'Cookie' => "PHPSESSID=#{@session}"}
   end
   
   def close
