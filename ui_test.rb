@@ -1,52 +1,3 @@
-#~ panes[:queue] = Remora::UIPane.new self, 1, 1, 20, -1, 'Queue'
-#~ panes[:main] = Remora::UIPane.new self, 20, 1, -1, -5, 'Search Results'
-#~ panes[:np] = Remora::UIPane.new self, 20, -5, -1, -1, 'Now Playing'
-#~ 
-  #~ def handle_stdin
-    #~ $stdin.read_nonblock(1024).each_char do |chr|
-      #~ if chr == "\n"
-	#~ next if @buffer.empty?
-	#~ 
-	#~ if @buffer.to_i.to_s == @buffer && @results
-	  #~ index = @buffer.to_i - 1
-	  #~ next if index < 0 || index > @results.size
-	  #~ 
-	  #~ song = @results[index]
-	  #~ @client.queue << song
-	  #~ 
-	  #~ unless @client.now_playing
-	    #~ Thread.new do
-	      #~ @client.queue.play_radio
-	    #~ end
-	  #~ end
-	  #~ 
-	  #~ @buffer = ''
-	  #~ panes[:main].data[0] = @buffer.empty? ? (@search || '') : ''
-	  #~ self.cursor = false
-	#~ else
-	  #~ @search = @buffer
-	  #~ @results = @client.search_songs(@search)['Return']
-	  #~ panes[:main].data = @results.map do |result|
-	    #~ "#{(@results.index(result)+1).to_s.rjust 2}) #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
-	  #~ end
-	  #~ panes[:main].data.unshift @search
-	  #~ panes[:main].title = "Search Results for #{@search}"
-#~ 
-	  #~ @buffer = ''
-	  #~ self.cursor = false
-	#~ end
-      #~ else
-	#~ @buffer << chr
-	#~ @buffer.gsub!(/.\177/, '')
-	#~ @buffer.gsub!("\177", '')
-	#~ panes[:main].data[0] = @buffer.empty? ? (@search || '') : ''
-	#~ self.cursor = !(@buffer.empty?)
-      #~ end
-    #~ end
-  #~ rescue Errno::EAGAIN
-  #~ rescue EOFError
-  #~ end
-
 require File.join(File.dirname(__FILE__), 'ui')
 
 begin
@@ -123,13 +74,16 @@ begin
     control :cancel, Remora::UI::Button, 15, 6, 25, 6 do
       self.text = 'Cancel'
       self.alignment = :center
+      
+      on_submit do
+	# user canceled the action
+      end
     end
       
     on_submit do
       yank_values
-      #raise yank_values.inspect
-      display.panes[:login].hide!
-      display.active_control = display.panes[:main].controls[:search]
+      display[:login].hide!
+      display.active_control = display[:main][:search]
       display.dirty!
     end
   end

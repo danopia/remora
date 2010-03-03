@@ -43,6 +43,10 @@ class Display
     end
   end
   
+  def [] pane
+    @panes[pane]
+  end
+  
   def handle
     handle_stdin
     

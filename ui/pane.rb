@@ -14,6 +14,10 @@ class Pane
     instance_eval &blck if blck
   end
   
+  def [] control
+    @controls[control]
+  end
+  
   alias dirty? dirty
   def dirty!
     @dirty = true
