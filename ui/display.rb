@@ -18,8 +18,8 @@ class Display
     @panes[name] = Pane.new(self, *args, &blck)
   end
   
-  def alert *args, &blck
-    @panes[:alert] = Alert.new(self, *args, &blck)
+  def alert name, *args, &blck
+    @panes[name] = Alert.new(self, *args, &blck)
   end
   
   def place row, col, text

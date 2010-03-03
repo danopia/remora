@@ -74,9 +74,9 @@ end
 begin
   
   def show_login display
-    display.active_control = display.panes[:alert].controls[:user]
-    display.panes[:alert].show!
-    display.dirty! :alert
+    display.active_control = display.panes[:login].controls[:user]
+    display.panes[:login].show!
+    display.dirty! :login
   end
   
   display.pane :queue, 1, 1, 20, -1, 'Queue' do
@@ -152,7 +152,7 @@ begin
     end
   end
 
-  display.alert 30, 8, 'Login to Grooveshark' do
+  display.alert :login, 30, 8, 'Login to Grooveshark' do
     hide!
     
     control :user, Remora::UI::TextBox, 3, 2, -3, 2 do
@@ -172,7 +172,7 @@ begin
     on_submit do
       creds = yank_values
       
-      display.panes[:alert].hide!
+      display.panes[:login].hide!
       display.dirty!
       
       client.auth creds[:user], creds[:pass]

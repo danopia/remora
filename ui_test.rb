@@ -106,7 +106,7 @@ begin
     end
   end
 
-  display.alert 30, 8, 'Login to Grooveshark' do
+  display.alert :login, 30, 8, 'Login to Grooveshark' do
     display.active_control = control :user, Remora::UI::TextBox, 3, 2, -3, 2 do
       self.label = 'Username'
       self.text = ''
@@ -124,7 +124,7 @@ begin
     on_submit do
       yank_values
       #raise yank_values.inspect
-      display.panes.delete :alert
+      display.panes[:login].hide!
       display.active_control = display.panes[:main].controls[:search]
       display.dirty!
     end
