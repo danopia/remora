@@ -24,11 +24,11 @@ class ListBox < Control
     @hanging_indent = 4
   end
   
-  def fit_data
+  def fit_data offset=nil
     lines = 0
     items = 0
     
-    data[@offset, height].each do |line|
+    data[offset || @offset, height].each do |line|
       _height = line_height(line)
       if _height + lines > height
         break
@@ -57,11 +57,12 @@ class ListBox < Control
     lines
   end
   
-  def fit_data_back
+  def fit_data_back offset=nil
     lines = -1
     items = 0
     
-    data[([@offset - height,0].max)..([@offset,0].max)].reverse.each do |line|
+    offset ||= @offset
+    data[([offset - height,0].max)..([offset,0].max)].reverse.each do |line|
       _height = line_height(line)
       if _height + lines >= height
         break
@@ -118,6 +119,7 @@ class ListBox < Control
       @index = [@offset + fit_data[1] - 1, @index].min
     elsif char == :pagedown
       @offset = [@data.size - 1, @offset + fit_data[1]].min
+      @offset = [@offset, @data.size - fit_data_back(@data.size)[1]].min
       @index = [@offset, @index].max
     end
     redraw
