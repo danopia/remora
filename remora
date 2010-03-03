@@ -13,7 +13,7 @@ if ARGV.any?
       client = DRbObject.new nil, 'druby://localhost:68739'
       info = client.now_playing
       if info
-        puts "#{info['SongName'] || info['Name']} - #{info['ArtistName']} - #{info['AlbumName']}"
+        puts info.to_s
       else
         puts "No song is playing"
       end

@@ -53,6 +53,7 @@
 
 module GrooveShark
 class Song
+  include DRbUndumped
   attr_reader :id, :data
   
   def initialize data=nil

@@ -1,5 +1,6 @@
 module GrooveShark
 class User
+  include DRbUndumped
   attr_reader :id, :username, :premium, :data, :playlists, :favorites
 
   # {"userID":1839825,"username":"danopia","isPremium":"0",

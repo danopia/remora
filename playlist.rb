@@ -1,5 +1,6 @@
 module GrooveShark
 class Playlist
+  include DRbUndumped
   attr_reader :id, :name, :about, :picture, :userid, :username, :songs
 
   def self.by_user client, user_id
