@@ -14,6 +14,10 @@ class Button < Label
     #redraw
   end
   
+  def handle_click button, modifiers, x, y
+    handler.call self, @text if button == :left && handler
+  end
+  
   def text
     "[ #{@text} ]"
   end
