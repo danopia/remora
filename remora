@@ -72,49 +72,11 @@ trap 'INT' do
 end
 
 begin
-  def create_login_dialog client
-    display = client.display
-    
-    display.alert 30, 8, 'Login to Grooveshark' do
-      display.active_control = control :user, Remora::UI::TextBox, 3, 2, -3, 2 do
-        self.label = 'Username'
-        self.text = ''
-      end
-      control :pass, Remora::UI::TextBox, 3, 4, -3, 4 do
-        self.label = 'Password'
-        self.text = ''
-        self.mask = '*'
-      end
-      control :submit, Remora::UI::Button, 10, 6, -10, 6 do
-        self.text = 'Login'
-        self.alignment = :center
-      end
-        
-      on_submit do
-        creds = yank_values
-        
-        display.panes.delete :alert
-        display.alert 30, 3, 'Login to Grooveshark' do
-          control :status, Remora::UI::Label, 1, 2, -1, 2 do
-            self.text = 'Processing...'
-            self.alignment = :center
-          end
-        end
-        display.dirty!
-        
-        client.auth creds[:user], creds[:pass]
-        
-        $results = client.fetch_favorites
-        display.panes[:main].controls[:results].data = $results.map {|fav| fav.to_s }
-        display.panes[:main].title = "Your Favorites"
-        
-        display.panes.delete :alert
-        display.active_control = display.panes[:main].controls[:search]
-        display.dirty!
-      end
-    end
-    
-    display.dirty!
+  
+  def show_login display
+    display.active_control = display.panes[:alert].controls[:user]
+    display.panes[:alert].show!
+    display.dirty! :alert
   end
   
   display.pane :queue, 1, 1, 20, -1, 'Queue' do
@@ -174,7 +136,7 @@ begin
     elsif query == '/stop'
       client.player && client.player.stop
     elsif query == '/login'
-      create_login_dialog client
+      show_login display
     elsif query =~ /^\/player (.+)$/
       client.player && client.player.process.puts($1)
     elsif query =~ /^\/raw ([^ ]+) ([^ ]+) (.*)$/
@@ -187,6 +149,40 @@ begin
       display.panes[:main].controls[:results].data = $results.map {|song| song.to_s }
       display.panes[:main].title = "Search Results for #{query}"
       display.dirty! :main
+    end
+  end
+
+  display.alert 30, 8, 'Login to Grooveshark' do
+    hide!
+    
+    control :user, Remora::UI::TextBox, 3, 2, -3, 2 do
+      self.label = 'Username'
+      self.text = ''
+    end
+    control :pass, Remora::UI::TextBox, 3, 4, -3, 4 do
+      self.label = 'Password'
+      self.text = ''
+      self.mask = '*'
+    end
+    control :submit, Remora::UI::Button, 10, 6, -10, 6 do
+      self.text = 'Login'
+      self.alignment = :center
+    end
+      
+    on_submit do
+      creds = yank_values
+      
+      display.panes[:alert].hide!
+      display.dirty!
+      
+      client.auth creds[:user], creds[:pass]
+      
+      $results = client.fetch_favorites
+      display.panes[:main].controls[:results].data = $results.map {|fav| fav.to_s }
+      display.panes[:main].title = "Your Favorites"
+      
+      display.active_control = display.panes[:main].controls[:search]
+      display.dirty!
     end
   end
 
