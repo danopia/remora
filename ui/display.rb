@@ -137,6 +137,8 @@ class Display
           @escapes = 1
         elsif chr == "\t"
           cycle_controls
+        elsif chr == "\177"
+          route_key :backspace
         else
           route_key chr
         end

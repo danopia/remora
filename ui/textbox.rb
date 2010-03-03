@@ -1,11 +1,12 @@
 module Remora
 module UI
 class TextBox < Label
-  attr_accessor :multiline, :handler, :label, :mask
+  attr_accessor :multiline, :handler, :label, :mask, :index
   
   def initialize *args
     @label = ''
     @text = 'Input box'
+    @index = 0
     
     super
   end
@@ -19,10 +20,9 @@ class TextBox < Label
       when :right
         text.rjust width
       else
-        @display.place y1, x1 + text.size, "\e[s" if @display.active_control == self
+        @display.place y1, x1 + text.size - @text.size + @index, "\e[s" if @display.active_control == self
     end
     @display.cursor = true if @display.active_control == self
-    #print "\e[s" # save
   end
   
   def on_submit &blck
@@ -31,6 +31,7 @@ class TextBox < Label
   
   def value= val
     @text = val
+    @index = @text.size if @index > @text.size
   end
   def value
     @text
@@ -48,12 +49,28 @@ class TextBox < Label
   
   def handle_char char
     if char == "\n" && !@multiline
-      handler.call self, value if handler
-      @text = ''
-    elsif char == "\177"
-      @text.slice! -1
-    else
-      @text += char
+      handler.call self, @text if handler
+      self.value = ''
+    elsif char == :backspace
+      if @index > 0
+        @index -= 1
+        @text.slice! @index, 1
+      end
+    elsif char == :delete
+      if @index < @text.size
+        @text.slice! @index, 1
+      end
+    elsif char == :left
+      @index -= 1 if @index > 0
+    elsif char == :right
+      @index += 1 if @index < @text.size
+    elsif char == :home
+      @index = 0
+    elsif char == :end
+      @index = @text.size
+    elsif char.is_a? String
+      @text.insert @index, char
+      @index += 1
     end
     redraw
   end
