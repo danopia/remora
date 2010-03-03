@@ -120,6 +120,15 @@ class Display
     @active_control.redraw
   end
   
+  BUTTONS = {
+    0 => :left,
+    1 => :middle,
+    2 => :right,
+    3 => :release,
+    64 => :scrollup,
+    65 => :scrolldown
+  }
+  
   # alt-anything => \e*KEY* (same as Esc, key)
   # alt-[ would become \e[ which is an ANSI escape
   #
@@ -162,7 +171,7 @@ class Display
         elsif chr == 'Z'
           cycle_controls_back
         else
-          @ebuff += chr
+          @ebuff = chr
           @escapes = 3
         end
         @escapes = 0 if @escapes == 2
@@ -182,6 +191,15 @@ class Display
             when 24; :f12
             else; raise @ebuff.inspect
           end
+        elsif @ebuff[0,1] == 'M' && @ebuff.size == 3
+          @ebuff += chr
+          info, x, y = @ebuff.unpack('xCCC').map{|i| i - 32}
+          modifiers = []
+          modifiers << :shift if info & 4 == 4
+          modifiers << :meta if info & 8 == 8
+          modifiers << :control if info & 16 == 16
+          pane = pane_at(x, y)
+          pane.handle_click BUTTONS[info & 71], modifiers, x, y if pane
         elsif @ebuff.size > 10
           raise "long ebuff #{@ebuff.inspect} - #{chr.inspect}"
         else
@@ -219,6 +237,13 @@ class Display
   rescue EOFError
   end
   
+  def pane_at x, y
+    @panes.values.reverse.each do |pane|
+      return pane if (pane.x1..pane.x2).include?(x) && (pane.y1..pane.y2).include?(y)
+    end
+    nil
+  end
+  
   def route_key chr
     @active_control.handle_char chr if @active_control
   end
@@ -253,11 +278,15 @@ class Display
     new_modes[3] &= ~ECHO # echo off
     new_modes[3] &= ~ICANON # one char @ a time
     $stdout.ioctl(TCSETS, new_modes.pack("IIIICCA*"))
+    print "\e[?47h" # kick xterm into the alt screen
+    print "\e[?1000h" # kindly ask for mouse positions to make up for it
     self.cursor = false
   end
   def undo_modes # restore previous terminal mode
     $stdout.ioctl(TCSETS, @old_modes.pack("IIIICCA*"))
     print "\e[2J\e[H" # clear all and go home
+    print "\e[?47l" # kick xterm back into the normal screen
+    print "\e[?1000l" # turn off mouse reporting
     self.linedrawing = false
     self.cursor = true # show the mouse
   end

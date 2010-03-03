@@ -77,6 +77,20 @@ class Pane
       control.redraw
     end
   end
+  
+  def control_at x, y
+    @controls.values.each do |control|
+      return control if (control.x1..control.x2).include?(x) && (control.y1..control.y2).include?(y)
+    end
+    nil
+  end
+  
+  def handle_click button, modifiers, x, y
+    control = control_at x, y
+    if control && control.respond_to?(:handle_click)
+      control.handle_click button, modifiers, x, y
+    end
+  end
 
   def draw_frame
     linebar = 'q' * (width - 1)

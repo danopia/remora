@@ -124,6 +124,17 @@ class ListBox < Control
     end
     redraw
   end
+  
+  def handle_click button, modifiers, x, y
+    if button == :scrollup
+      @offset -= 1 if @offset > 0
+      @index = [@offset + fit_data[1] - 1, @index].min
+    elsif button == :scrolldown
+      @offset += 1 if @offset < (@data.size - fit_data_back(@data.size)[1])
+      @index = [@offset, @index].max
+    end
+    redraw
+  end
 end
 end
 end
