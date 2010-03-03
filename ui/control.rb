@@ -12,6 +12,10 @@ class Control
     instance_eval &blck if blck
   end
   
+  def focus!
+    @display.active_control = self
+  end
+  
   def x1
     @pane.x1 + ((@x1 < 0) ? (@pane.width + @x1) : @x1)
   end

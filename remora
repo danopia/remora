@@ -57,7 +57,7 @@ end
 begin
   
   def show_login display
-    display.active_control = display[:login, :user]
+    display.focus :login, :user
     display[:login].show!
     display.dirty! :login
   end
@@ -69,9 +69,11 @@ begin
   end
 
   display.pane :main, 20, 1, -1, -15, 'Search results' do
-    display.active_control = control :search, Remora::UI::TextBox, 2, 1, -2, 1 do
+    control :search, Remora::UI::TextBox, 2, 1, -2, 1 do
       self.label = 'Search'
       self.text = ''
+      
+      focus!
     end
     control :results, Remora::UI::ListBox, 1, 2, -1, -1 do
       number!
@@ -159,7 +161,7 @@ begin
       on_submit do
         yank_values # clear the boxes
         display[:login].hide!
-        display.active_control = display[:main, :search]
+        display.focus :main, :search
         display.dirty!
       end
     end
@@ -176,7 +178,7 @@ begin
       display[:main, :results].data = $results.map {|fav| fav.to_s }
       display[:main].title = "Your Favorites"
       
-      display.active_control = display[:main, :search]
+      display.focus :main, :search
       display.dirty!
     end
   end

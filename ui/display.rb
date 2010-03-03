@@ -51,6 +51,10 @@ class Display
     end
   end
   
+  def focus *path
+    self.active_control = self[*path]
+  end
+  
   def handle
     handle_stdin
     

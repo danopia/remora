@@ -58,9 +58,11 @@ begin
   end
 
   display.alert :login, 30, 8, 'Login to Grooveshark' do
-    display.active_control = control :user, Remora::UI::TextBox, 3, 2, -3, 2 do
+    control :user, Remora::UI::TextBox, 3, 2, -3, 2 do
       self.label = 'Username'
       self.text = ''
+      
+      focus!
     end
     control :pass, Remora::UI::TextBox, 3, 4, -3, 4 do
       self.label = 'Password'
@@ -74,16 +76,12 @@ begin
     control :cancel, Remora::UI::Button, 15, 6, 25, 6 do
       self.text = 'Cancel'
       self.alignment = :center
-      
-      on_submit do
-	# user canceled the action
-      end
     end
       
     on_submit do
       yank_values
       display[:login].hide!
-      display.active_control = display[:main, :search]
+      display.focus :main, :search
       display.dirty!
     end
   end
