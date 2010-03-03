@@ -85,22 +85,24 @@ class Pane
       "#{@display.color '1;34'} #{@title[0, width - 3].center(width - 3)} #{@display.color '0;2'}"
     else
       title_colored = "#{@display.color '1;34'}#{title}#{@display.color '0;2'}"
-      ('-' * left) + title_colored + ('-' * (width - 1 - title.size - left))
+      ('q' * left) + title_colored + ('q' * (width - 1 - title.size - left))
     end
   end
 
   def draw_frame
-    bottombar = '-' * (width - 1)
+    bottombar = 'q' * (width - 1)
     fillerbar = ' ' * (width - 1)
 
+    @display.linedrawing = true
     print @display.color('0;2')
-    @display.place y1, x1, "+#{topbar}+"
-    @display.place y2, x1, "+#{bottombar}+"
+    @display.place y1, x1, "r#{topbar}r"
+    @display.place y2, x1, "r#{bottombar}r"
 
     (y1 + 1).upto y2 - 1 do |row|
-      @display.place row, x1, "|#{fillerbar}|"
+      @display.place row, x1, "x#{fillerbar}x"
     end
     print @display.color('0')
+    @display.linedrawing = false
   end
 end
 end
