@@ -108,39 +108,106 @@ class Display
     @active_control.redraw
   end
   
-  # \e[Z      shift-tab
-  #
-  # \e[A      up
-  # \e[B      down
-  # \e[C      right
-  # \e[D      left
-  # \e[E      middle (5 with numlock off)
-  #
-  # \e[2~  \e[3~  \eOH \eOF \e[5~ \e[6~
-  # insert delete home end  pgup  pgdown
-  #
-  #  ----  \eOQ   \eOR   \eOS
-  #   F1     F2     F3     F4
-  #
-  # \e[15~ \e[17~ \e[18~ \e[19~
-  #   F5     F6     F7     F8
-  #
-  # \e[20~ ------ ------ \e[24~
-  #   F9     F10    F11    F12
-  #
+  def cycle_controls_back
+    index = @active_pane.controls.keys.index @active_pane.controls.key(@active_control)
+    begin
+      index -= 1
+      index = @active_pane.controls.size - 1 if index < 0
+    end until @active_pane.controls[@active_pane.controls.keys[index]].respond_to? :handle_char
+    old = @active_control
+    @active_control = @active_pane.controls[@active_pane.controls.keys[index]]
+    old.redraw
+    @active_control.redraw
+  end
+  
   # alt-anything => \e*KEY* (same as Esc, key)
   # alt-[ would become \e[ which is an ANSI escape
   #
   # ctrl-stuff becomes weird stuff, i.e. ctrl-space = \x00, ctrl-a = \x01, ctrl-b = \x02
   #
   # super is not sent?
-  #
   def handle_stdin
+    @escapes ||= 0
+    @ebuff ||= ''
+    
     $stdin.read_nonblock(1024).each_char do |chr|
-      if chr == "\t"
-        cycle_controls
+    
+      if @escapes == 0
+        if chr == "\e"
+          @escapes = 1
+        elsif chr == "\t"
+          cycle_controls
+        else
+          route_key chr
+        end
+        
+      elsif @escapes == 1 && chr == '['
+        @escapes = 2
+      elsif @escapes == 1 && chr == 'O'
+        @escapes = 5
+        
+      elsif @escapes == 2
+        if chr == 'A'
+          route_key :up
+        elsif chr == 'B'
+          route_key :down
+        elsif chr == 'C'
+          route_key :right
+        elsif chr == 'D'
+          route_key :left
+        elsif chr == 'E'
+          route_key :center
+        elsif chr == 'Z'
+          cycle_controls_back
+        else
+          @ebuff += chr
+          @escapes = 3
+        end
+        @escapes = 0 if @escapes == 2
+        
+      elsif @escapes == 3
+        if chr == '~' && @ebuff.to_i.to_s == @ebuff
+          route_key case @ebuff.to_i
+            when 2; :insert
+            when 3; :delete
+            when 5; :pageup
+            when 6; :pagedown
+            when 15; :f5
+            when 17; :f6
+            when 18; :f7
+            when 19; :f8
+            when 20; :f9
+            when 24; :f12
+            else; raise @ebuff.inspect
+          end
+        elsif @ebuff.size > 10
+          raise "long ebuff #{@ebuff.inspect} - #{chr.inspect}"
+        else
+          @ebuff += chr
+          @escapes = 4
+        end
+        @escapes = 0 if @escapes == 3
+        @escapes = 3 if @escapes == 4
+        @ebuff = '' if @escapes == 0
+        
+      elsif @escapes == 5
+        if chr == 'H'
+          route_key :home
+        elsif chr == 'F'
+          route_key :end
+        elsif chr == 'Q'
+          route_key :f2
+        elsif chr == 'R'
+          route_key :f3
+        elsif chr == 'S'
+          route_key :f4
+        else
+          raise "escape 5 #{chr.inspect}"
+        end
+        @escapes = 0
+        
       else
-        @active_control.handle_char chr if @active_control
+        @escapes = 0
       end
     end
     
@@ -148,6 +215,10 @@ class Display
     
   rescue Errno::EAGAIN
   rescue EOFError
+  end
+  
+  def route_key chr
+    @active_control.handle_char chr if @active_control
   end
   
   ######################################
