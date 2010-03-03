@@ -87,9 +87,11 @@ class Pane
   
   def handle_click button, modifiers, x, y
     control = control_at x, y
+    control.focus! if button == :left
     if control && control.respond_to?(:handle_click)
       control.handle_click button, modifiers, x, y
     end
+    control.redraw
   end
 
   def draw_frame

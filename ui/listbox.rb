@@ -76,6 +76,8 @@ class ListBox < Control
   end
   
   def redraw
+    @display.cursor = false if @display.active_control == self
+    
     row = y1
     data[@offset, height].each_with_index do |line, index|
       line = line.to_s
@@ -132,6 +134,22 @@ class ListBox < Control
     elsif button == :scrolldown
       @offset += 1 if @offset < (@data.size - fit_data_back(@data.size)[1])
       @index = [@offset, @index].max
+    
+    elsif button == :left
+      row = y1
+      data[@offset, height].each_with_index do |line, index|
+        _height = line_height(line)
+        if _height + row > height
+          break
+        else
+          row += _height
+        end
+        if row > y
+          @index = index
+          break
+        end
+      end
+      
     end
     redraw
   end
