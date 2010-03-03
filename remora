@@ -47,24 +47,6 @@ Thread.new {
   }
 }
 
-#~ puts "Enter a search query:"
-#~ query = gets.chomp
-#~ puts
-#~ puts "Searching for \"#{query}\":"
-#~ results = client.search_songs(query)['Return']
-#~ results.each do |result|
-  #~ puts "#{results.index result} - #{result['Name']} - #{result['ArtistName']} - #{result['AlbumName']}"
-#~ end
-#~ 
-#~ puts
-#~ puts "Please type in a song index to [attempt to] play it:"
-#~ index = gets.to_i
-#~ 
-#~ client.queue << results[index]
-#~ Thread.new do
-  #~ client.queue.play_radio
-#~ end
-
 $display = display = client.display = Remora::UI::Display.new(client)
 
 trap 'INT' do
@@ -75,8 +57,8 @@ end
 begin
   
   def show_login display
-    display.active_control = display.panes[:login].controls[:user]
-    display.panes[:login].show!
+    display.active_control = display[:login, :user]
+    display[:login].show!
     display.dirty! :login
   end
   
@@ -111,7 +93,7 @@ begin
   end
   
   $results = nil
-  display.panes[:main].controls[:search].on_submit do |box, query|
+  display[:main, :search].on_submit do |box, query|
     next if query.empty?
 	
     if query.to_i.to_s == query && $results
@@ -142,13 +124,13 @@ begin
       client.player && client.player.process.puts($1)
     elsif query =~ /^\/raw ([^ ]+) ([^ ]+) (.*)$/
       $results = nil
-      display.panes[:main].controls[:results].data = client.request($1, $2, eval($3)).inspect.lines.to_a.map{|l| l.chomp}
-      display.panes[:main].title = "Results for #{$2} to #{$1}"
+      display[:main, :results].data = client.request($1, $2, eval($3)).inspect.lines.to_a.map{|l| l.chomp}
+      display[:main].title = "Results for #{$2} to #{$1}"
       display.dirty! :main
     else
       $results = client.search_songs(query)
-      display.panes[:main].controls[:results].data = $results.map {|song| song.to_s }
-      display.panes[:main].title = "Search Results for #{query}"
+      display[:main, :results].data = $results.map {|song| song.to_s }
+      display[:main].title = "Search Results for #{query}"
       display.dirty! :main
     end
   end
@@ -173,16 +155,16 @@ begin
     on_submit do
       creds = yank_values
       
-      display.panes[:login].hide!
+      display[:login].hide!
       display.dirty!
       
       client.login creds[:user], creds[:pass]
       
       $results = client.user.favorites
-      display.panes[:main].controls[:results].data = $results.map {|fav| fav.to_s }
-      display.panes[:main].title = "Your Favorites"
+      display[:main, :results].data = $results.map {|fav| fav.to_s }
+      display[:main].title = "Your Favorites"
       
-      display.active_control = display.panes[:main].controls[:search]
+      display.active_control = display[:main, :search]
       display.dirty!
     end
   end
