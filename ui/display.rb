@@ -43,8 +43,12 @@ class Display
     end
   end
   
-  def [] pane
-    @panes[pane]
+  def [] pane, control=nil
+    if control
+      @panes[pane].controls[control]
+    else
+      @panes[pane]
+    end
   end
   
   def handle

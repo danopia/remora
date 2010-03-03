@@ -83,7 +83,7 @@ begin
     on_submit do
       yank_values
       display[:login].hide!
-      display.active_control = display[:main][:search]
+      display.active_control = display[:main, :search]
       display.dirty!
     end
   end
