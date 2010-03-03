@@ -10,14 +10,20 @@ module GrooveShark
 class Client
   include DRbUndumped
   attr_accessor :session, :comm_token, :queue, :now_playing, :player, :display, :use_aoss
-  attr_reader :user_id, :username, :premium, :playlists, :favorites
+  attr_reader :user_id, :username, :premium, :playlists, :favorites, :sock, :secure_sock
   
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'
   CLIENT = 'gslite'
   CLIENT_REV = '20100115.09'
   
+  COWBELL = 'cowbell.grooveshark.com'
+  
   def initialize session=nil
     @session = session || get_session
+    
+    @sock = JSONSock.new "http://#{COWBELL}/", @session
+    @secure_sock = JSONSock.new "https://#{COWBELL}/", @session
+    
     get_comm_token
     @queue = Queue.new self
     
@@ -27,7 +33,7 @@ class Client
   end
   
   def request page, method, parameters=nil, secure=false
-    url = "http#{secure ? 's' : ''}://cowbell.grooveshark.com/#{page}.php?#{method}"
+    url = "/#{page}.php?#{method}"
     request = {
       'header' => {
         'session' => @session,
@@ -40,7 +46,11 @@ class Client
     }
     request['header']['token'] = create_token(method) if @comm_token
     
-    data = GrooveShark::JSONSock.post url, request
+    if secure
+      data = @secure_sock.post url, request
+    else
+      data = @sock.post url, request
+    end
     
     # maybe they have a use :P
     puts "Have #{data['header']['alerts'].size} alerts" if data['header'] && data['header']['alerts'] && data['header']['alerts'].size != 2

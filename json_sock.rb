@@ -6,14 +6,29 @@ require 'json'
 
 module GrooveShark
 class JSONSock
-  def self.post url, data
-    url = URI.parse url
-    http = Net::HTTP.new url.host, url.port
-    req = Net::HTTP::Post.new url.path, {'Content-type' => 'application/json', 'Cookie' => "PHPSESSID=#{$session}"}
-    http.use_ssl = true if url.port == 443
-    res = http.request req, data.to_json
+  attr_reader :http, :uri
+  attr_accessor :session
+  
+  def initialize server, session=nil
+    @session = session
+    
+    @uri = URI.parse server
+    @http = Net::HTTP.new @uri.host, @uri.port
+    @http.use_ssl = true if ssl?
+  end
+  
+  def ssl?; @uri.scheme == 'https'; end
+  
+  def post url, data
+    url = @uri + URI.parse(url)
+    req = Net::HTTP::Post.new url.request_uri, {'Content-type' => 'application/json', 'Cookie' => "PHPSESSID=#{@session}"}
+    res = @http.request req, data.to_json
     $sock.puts res.body if $sock
     JSON.parse res.body
+  end
+  
+  def close
+    @http.finish if @http.started?
   end
 end
 end
