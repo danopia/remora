@@ -55,6 +55,33 @@ class Display
     self.active_control = self[*path]
   end
   
+  # \e[Z      shift-tab
+  #
+  # \e[A      up
+  # \e[B      down
+  # \e[C      right
+  # \e[D      left
+  # \e[E      middle (5 with numlock off)
+  #
+  # \e[2~  \e[3~  \eOH \eOF \e[5~ \e[6~
+  # insert delete home end  pgup  pgdown
+  #
+  #  ----  \eOQ   \eOR   \eOS
+  #   F1     F2     F3     F4
+  #
+  # \e[15~ \e[17~ \e[18~ \e[19~
+  #   F5     F6     F7     F8
+  #
+  # \e[20~ ------ ------ \e[24~
+  #   F9     F10    F11    F12
+  #
+  # alt-anything => \e*KEY* (same as Esc, key)
+  # alt-[ would become \e[ which is an ANSI escape
+  #
+  # ctrl-stuff becomes weird stuff, i.e. ctrl-space = \x00, ctrl-a = \x01, ctrl-b = \x02
+  #
+  # super is not sent?
+  
   def handle
     handle_stdin
     
