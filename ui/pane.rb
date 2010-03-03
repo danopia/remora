@@ -1,7 +1,7 @@
 module Remora
 module UI
 class Pane
-  attr_accessor :display, :x1, :y1, :x2, :y2, :title, :controls, :handler, :dirty
+  attr_accessor :display, :x1, :y1, :x2, :y2, :title, :controls, :handler, :dirty, :visible
   
   def initialize display, x1, y1, x2, y2, title, controls={}, &blck
     @display = display
@@ -9,6 +9,7 @@ class Pane
     @x2, @y2 = x2, y2
     @title, @controls = title, controls
     @dirty = false
+    @visible = true
     
     instance_eval &blck if blck
   end
@@ -17,6 +18,10 @@ class Pane
   def dirty!
     @dirty = true
   end
+  
+  alias visible? visible
+  def show!; @visible = true; end
+  def hide!; @visible = false; end
   
   def yank_values
     vals = {}

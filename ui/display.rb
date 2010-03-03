@@ -57,7 +57,7 @@ class Display
       redraw
       @dirty = false
     else
-      panes = @panes.values.select {|pane| pane.dirty? }
+      panes = @panes.values.select {|pane| pane.dirty? && pane.visible? }
       redraw panes if panes.any?
     end
     @panes.each_value {|pane| pane.dirty = false }
@@ -67,7 +67,7 @@ class Display
     print "\e[H\e[J" unless panes # clear all and go home
     
     panes ||= @panes.values
-    panes.each {|pane| pane.redraw }
+    panes.each {|pane| pane.redraw if pane.visible? }
     print "\e[u"
     
     $stdout.flush
