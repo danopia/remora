@@ -26,6 +26,7 @@ if ARGV.any?
 end
 
 require File.join(File.dirname(__FILE__), 'client')
+require File.join(File.dirname(__FILE__), 'user')
 require File.join(File.dirname(__FILE__), 'playlist')
 require File.join(File.dirname(__FILE__), 'song')
 require File.join(File.dirname(__FILE__), 'mplayer')
@@ -175,9 +176,9 @@ begin
       display.panes[:login].hide!
       display.dirty!
       
-      client.auth creds[:user], creds[:pass]
+      client.login creds[:user], creds[:pass]
       
-      $results = client.fetch_favorites
+      $results = client.user.favorites
       display.panes[:main].controls[:results].data = $results.map {|fav| fav.to_s }
       display.panes[:main].title = "Your Favorites"
       

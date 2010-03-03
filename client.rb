@@ -10,7 +10,7 @@ module GrooveShark
 class Client
   include DRbUndumped
   attr_accessor :session, :comm_token, :queue, :now_playing, :player, :display, :use_aoss
-  attr_reader :user_id, :username, :premium, :playlists, :favorites, :sock, :secure_sock
+  attr_reader :user, :sock, :secure_sock
   
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'
   CLIENT = 'gslite'
@@ -25,7 +25,7 @@ class Client
     @secure_sock = JSONSock.new "https://#{COWBELL}/", @session
     
     get_comm_token
-    @queue = Queue.new self
+    @queue = create_queue
     
     @premium = false
     @playlists = {}
@@ -82,32 +82,12 @@ class Client
     $1
   end
   
-  # {"userID":1839825,"username":"danopia","isPremium":"0",
-  # "autoAutoplay":false,"authRealm":1,"favoritesLimit":500,
-  # "librarySizeLimit":5000,"uploadsEnabled":1,"themeID":""}
-  def auth user, pass
-    results = request_service 'authenticateUserEx', {:username => 'danopia', :password => 'nSlpxQKo'}, true
-    
-    @user_id = results['userID']
-    @username = results['username']
-    @premium = results['isPremium']
-    
-    fetch_playlists
-    
-    results
+  def create_queue
+    Queue.new self
   end
   
-  def fetch_playlists
-    results = request_more('userGetPlaylists', :userID => @user_id)
-    
-    @playlists = results['Playlists'].map do |list|
-      Playlist.new self, list
-    end
-  end
-  
-  def fetch_favorites
-    results = request_more 'getFavorites', :ofWhat => 'Songs', :userID => @user_id
-    @favorites = results.map {|song| Song.new song }
+  def login user, pass
+    @user = User.login self, user, pass
   end
   
   def get_comm_token
