@@ -1,7 +1,7 @@
 module Remora
 module UI
 class ListBox < Control
-  attr_accessor :data, :numbering, :hanging_indent, :offset, :index
+  attr_accessor :data, :numbering, :hanging_indent, :offset, :index, :lastclick
   
   def on_submit &blck
     @handler = blck
@@ -16,6 +16,7 @@ class ListBox < Control
     @hanging_indent = 0
     @offset = 0
     @index = 0
+    @lastclick = Time.at 0
     super
   end
   
@@ -79,6 +80,7 @@ class ListBox < Control
     @display.cursor = false if @display.active_control == self
     
     row = y1
+    return unless data
     data[@offset, height].each_with_index do |line, index|
       line = line.to_s
       number = index + @offset + 1
@@ -107,7 +109,7 @@ class ListBox < Control
   
   def handle_char char
     if char == "\n"
-      handler.call self, nil if handler
+      handler.call self, @data[@index] if handler
     elsif char == :up
       @index -= 1 if @index > 0
       @offset -= 1 if @offset > @index
@@ -136,6 +138,11 @@ class ListBox < Control
       @index = [@offset, @index].max
     
     elsif button == :left
+      if Time.now - @lastclick < 0.5
+        button = :double
+      end
+      @lastclick = Time.now
+      
       row = y1
       data[@offset, height].each_with_index do |line, index|
         _height = line_height(line)
@@ -149,6 +156,8 @@ class ListBox < Control
           break
         end
       end
+      
+      handler.call self, @data[@index] if button == :double && handler
       
     end
     redraw

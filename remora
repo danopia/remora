@@ -94,6 +94,24 @@ begin
     control :position, Remora::UI::Label, 1, 3, -1, 3
   end
   
+  display[:main, :results].on_submit do |list, song|
+    next unless song.is_a? GrooveShark::Song
+    
+    client.queue << song
+    
+    unless client.now_playing
+      Thread.new do
+        begin
+          client.queue.play_radio
+        rescue => ex
+          display.undo_modes
+          puts ex.class, ex.message, ex.backtrace
+          exit
+        end
+      end
+    end
+  end
+  
   $results = nil
   display[:main, :search].on_submit do |box, query|
     next if query.empty?
@@ -131,7 +149,7 @@ begin
       display.dirty! :main
     else
       $results = client.search_songs(query)
-      display[:main, :results].data = $results.map {|song| song.to_s }
+      display[:main, :results].data = $results
       display[:main].title = "Search Results for #{query}"
       display.dirty! :main
     end
@@ -175,7 +193,7 @@ begin
       client.login creds[:user], creds[:pass]
       
       $results = client.user.favorites
-      display[:main, :results].data = $results.map {|fav| fav.to_s }
+      display[:main, :results].data = $results
       display[:main].title = "Your Favorites"
       
       display.focus :main, :search
