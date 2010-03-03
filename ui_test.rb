@@ -116,8 +116,12 @@ begin
       self.text = ''
       self.mask = '*'
     end
-    control :submit, Remora::UI::Button, 10, 6, -10, 6 do
+    control :submit, Remora::UI::Button, 5, 6, 14, 6 do
       self.text = 'Login'
+      self.alignment = :center
+    end
+    control :cancel, Remora::UI::Button, 15, 6, 25, 6 do
+      self.text = 'Cancel'
       self.alignment = :center
     end
       

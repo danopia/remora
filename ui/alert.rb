@@ -4,11 +4,9 @@ class Alert < Pane
   attr_accessor :width, :height, :handler
   
   def initialize display, width, height, title, controls={}, &blck
-    @display = display
-    @width, @height = width, height
-    @title, @controls = title, controls
+    super display, nil, nil, nil, nil, title, controls, &blck
     
-    instance_eval &blck if blck
+    @width, @height = width, height
   end
   
   def x1

@@ -49,7 +49,6 @@ class TextBox < Label
     if char == "\n" && !@multiline
       handler.call self, value if handler
       @text = ''
-      return
     elsif char == "\177"
       @text.slice! -1
     else
