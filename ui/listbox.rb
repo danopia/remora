@@ -152,7 +152,7 @@ class ListBox < Control
           row += _height
         end
         if row > y
-          @index = index
+          @index = index + @offset
           break
         end
       end
