@@ -1,3 +1,5 @@
+require 'net/http'
+
 class MPlayer
   include DRbUndumped
   attr_reader :client, :buffer, :stream_buffer, :offset, :thread
@@ -123,54 +125,50 @@ class MPlayer
   end
 
   def stream_from_http http, req
-    @thread = Thread.new do
-      begin
-        http.request(req) do |res|
-          @state = :starting_stream
-          @total_size = res.header['Content-Length'].to_i
+    http.request(req) do |res|
+      @state = :starting_stream
+      @total_size = res.header['Content-Length'].to_i
+      
+      if @total_size && @total_size > 0
+        @client.display.panes[:np].controls[:cue].maximum = @total_size
+        @client.display.panes[:np].controls[:cue].value = 0
+        @client.display.dirty! :np
+      end
+      
+      last_report = 0
+      
+      res.read_body do |chunk|
+        if chunk.size > 0
+          @stream_buffer << chunk
+          @state = :streaming
           
-          if @total_size && @total_size > 0
-            @client.display.panes[:np].controls[:cue].maximum = @total_size
-            @client.display.panes[:np].controls[:cue].value = 0
+          @client.display.panes[:np].controls[:cue].value = @stream_buffer.size
+          @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing.duration} (#{@stream_buffer.size / 1024} / #{@total_size / 1024} KiB)"
+          
+          last_report += chunk.size
+          if last_report > 102400
             @client.display.dirty! :np
-          end
-          
-          last_report = 0
-          
-          res.read_body do |chunk|
-            if chunk.size > 0
-              @stream_buffer << chunk
-              @state = :streaming
-              
-              @client.display.panes[:np].controls[:cue].value = @stream_buffer.size
-              @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing.duration} (#{@stream_buffer.size / 1024} / #{@total_size / 1024} KiB)"
-              
-              last_report += chunk.size
-              if last_report > 102400
-                @client.display.dirty! :np
-                last_report -= 102400
-              end
-            end
-          end
-          
-          case res
-            when Net::HTTPSuccess
-              #puts "success"
-            when Net::HTTPRedirection
-              url = URI.parse(res['location'])
-              stream_from_http Net::HTTP.new(url.host, url.port), Net::HTTP::Get.new(url.request_uri, {'Cookie' => "PHPSESSID=#{$session}"})
-              break
-            else
-              puts "error!"
-              exit
+            last_report -= 102400
           end
         end
-      rescue => ex
-        $display.undo_modes
-        puts ex.class, ex.message, ex.backtrace
-        exit
+      end
+      
+      case res
+        when Net::HTTPSuccess
+          #puts "success"
+        when Net::HTTPRedirection
+          url = URI.parse(res['location'])
+          stream_from_http Net::HTTP.new(url.host, url.port), Net::HTTP::Get.new(url.request_uri, {'Cookie' => "PHPSESSID=#{$session}"})
+          break
+        else
+          puts "error!"
+          exit
       end
     end
+  rescue => ex
+    $display.undo_modes
+    puts ex.class, ex.message, ex.backtrace
+    exit
   end
   
   def wait_for_exit
