@@ -62,11 +62,25 @@ begin
     display.dirty! :login
   end
   
-  display.pane :queue, 1, 1, 20, -1, 'Queue' do
+  display.pane :queue, 1, 1, 20, -15, 'Queue' do
     control :songs, Remora::UI::ListBox, 1, 1, -1, -1 do
       number!
     end
   end
+  
+  display.pane :threads, 1, -15, 20, -1, 'Threads' do
+    control :list, Remora::UI::ListBox, 1, 1, -1, -1 do
+      number!
+    end
+  end
+  
+  Thread.new {
+    loop {
+      display[:threads, :list].data = Thread.list.map {|t| t.object_id }
+      display.dirty! :threads
+      sleep 1
+    }
+  }
 
   display.pane :main, 20, 1, -1, -15, 'Search results' do
     control :search, Remora::UI::TextBox, 2, 1, -2, 1 do
