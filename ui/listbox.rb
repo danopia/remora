@@ -143,6 +143,8 @@ class ListBox < Control
       end
       @lastclick = Time.now
       
+      previous = @index
+      
       row = y1
       data[@offset, height].each_with_index do |line, index|
         _height = line_height(line)
@@ -157,7 +159,7 @@ class ListBox < Control
         end
       end
       
-      handler.call self, @data[@index] if button == :double && handler
+      handler.call self, @data[@index] if button == :double && previous == @index && handler
       
     end
     redraw
