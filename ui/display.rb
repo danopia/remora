@@ -239,7 +239,7 @@ class Display
   
   def pane_at x, y
     @panes.values.reverse.each do |pane|
-      return pane if (pane.x1..pane.x2).include?(x) && (pane.y1..pane.y2).include?(y)
+      return pane if pane.visible? && (pane.x1..pane.x2).include?(x) && (pane.y1..pane.y2).include?(y)
     end
     nil
   end

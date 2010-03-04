@@ -177,7 +177,7 @@ begin
       self.alignment = :center
       
       on_submit do
-        yank_values # clear the boxes
+        display[:login].yank_values # clear the boxes
         display[:login].hide!
         display.focus :main, :search
         display.dirty!
