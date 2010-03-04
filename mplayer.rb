@@ -144,6 +144,7 @@ class MPlayer
               
               @client.display.panes[:np].controls[:cue].value = @stream_buffer.size
               @client.display.panes[:np].controls[:position].text = "#{time_to_s @position} / #{time_to_s @client.now_playing.duration} (#{@stream_buffer.size / 1024} / #{@total_size / 1024} KiB)"
+              print "\e]2;#{@client.now_playing.to_s}\007" # kick xterm into the alt screen
               
               last_report += chunk.size
               if last_report > 102400
