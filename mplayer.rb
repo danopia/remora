@@ -4,8 +4,7 @@ class MPlayer
   include DRbUndumped
   attr_reader :client, :buffer, :stream_buffer, :offset, :thread
   attr_reader :stream, :process, :state, :total_size, :streamed_size
-  attr_reader :position, :position_str, :length, :length_str
-  attr_accessor :paused
+  attr_reader :position, :position_str, :length, :length_str, :paused
   
   def self.stream server, key, client=nil
     url = "http://#{server}/stream.php"
