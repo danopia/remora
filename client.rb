@@ -14,7 +14,7 @@ class Client
   
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'
   CLIENT = 'gslite'
-  CLIENT_REV = '20100115.09'
+  CLIENT_REV = '20100211.21'
   
   COWBELL = 'cowbell.grooveshark.com'
   
