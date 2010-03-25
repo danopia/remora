@@ -64,8 +64,7 @@ class Client
       return request(page, method, parameters)
     end
     
-    $sock.puts "Grooveshark returned fault code #{data['fault']['code']}: #{data['fault']['message']}"
-    nil
+    raise "Grooveshark returned fault code #{data['fault']['code']}: #{data['fault']['message']}"
   end
   
   # These refer to the two different pages that cowbell uses.
