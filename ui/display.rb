@@ -1,7 +1,7 @@
 module Remora
 module UI
 class Display
-  attr_accessor :width, :height, :client, :panes, :buffer, :dirty, :active_pane, :active_control
+  attr_accessor :width, :height, :client, :panes, :buffer, :dirty, :active_pane, :active_control, :modal
   
   def initialize client
     @client = client
@@ -77,6 +77,7 @@ class Display
       panes = @panes.values.select {|pane| pane.dirty? && pane.visible? }
       redraw panes if panes.any?
     end
+    
     @panes.each_value {|pane| pane.dirty = false }
   end
   
@@ -85,6 +86,7 @@ class Display
     
     panes ||= @panes.values
     panes.each {|pane| pane.redraw if pane.visible? }
+    modal.redraw if modal
     @panes.each_value {|pane| pane.draw_title if pane.visible? }
     print "\e[u"
     
@@ -199,7 +201,10 @@ class Display
           modifiers << :meta if info & 8 == 8
           modifiers << :control if info & 16 == 16
           pane = pane_at(x, y)
-          pane.handle_click BUTTONS[info & 71], modifiers, x, y if pane
+          
+          unless modal && modal != pane
+            pane.handle_click BUTTONS[info & 71], modifiers, x, y if pane
+          end
         elsif @ebuff.size > 10
           raise "long ebuff #{@ebuff.inspect} - #{chr.inspect}"
         else

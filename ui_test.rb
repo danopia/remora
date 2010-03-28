@@ -57,7 +57,7 @@ begin
     end
   end
 
-  display.alert :login, 30, 8, 'Login to Grooveshark' do
+  display.modal = display.alert :login, 30, 8, 'Login to Grooveshark' do
     control :user, Remora::UI::TextBox, 3, 2, -3, 2 do
       self.label = 'Username'
       self.text = ''
@@ -81,6 +81,7 @@ begin
     on_submit do
       yank_values
       display[:login].hide!
+      display.modal = nil
       display.focus :main, :search
       display.dirty!
     end
