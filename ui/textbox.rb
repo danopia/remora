@@ -20,9 +20,9 @@ class TextBox < Label
       when :right
         text.rjust width
       else
-        @display.place y1, x1 + text.size - @text.size + @index, "\e[s" if @display.active_control == self
+        @display.driver.set_cursor y1, x1 + text.size - @text.size + @index if @display.active_control == self
     end
-    @display.cursor = true if @display.active_control == self
+    @display.driver.cursor = true if @display.active_control == self
   end
   
   def on_submit &blck

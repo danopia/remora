@@ -1,3 +1,4 @@
+require File.join(File.dirname(__FILE__), 'ui', 'ansi')
 require File.join(File.dirname(__FILE__), 'ui', 'display')
 require File.join(File.dirname(__FILE__), 'ui', 'pane')
 require File.join(File.dirname(__FILE__), 'ui', 'alert')

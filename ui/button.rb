@@ -27,7 +27,7 @@ class Button < Label
   end
   
   def redraw
-    @display.cursor = false
+    @display.driver.cursor = false
     print @display.color(@display.active_control == self ? '1;34' : '0;36')
     super
     print @display.color('0')

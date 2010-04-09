@@ -50,7 +50,7 @@ Thread.new {
 $display = display = client.display = Remora::UI::Display.new(client)
 
 trap 'INT' do
-  display.undo_modes
+  display.close
   exit
 end
 
@@ -118,7 +118,7 @@ begin
         begin
           client.queue.play_radio
         rescue => ex
-          display.undo_modes
+          display.close
           puts ex.class, ex.message, ex.backtrace
           exit
         end
@@ -142,7 +142,7 @@ begin
           begin
             client.queue.play_radio
           rescue => ex
-            display.undo_modes
+            display.close
             puts ex.class, ex.message, ex.backtrace
             exit
           end
@@ -218,7 +218,7 @@ begin
   display.handle while sleep 0.01
 
 rescue => ex
-  display.undo_modes
+  display.close
   puts ex.class, ex.message, ex.backtrace
   exit
 end

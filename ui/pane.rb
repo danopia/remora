@@ -100,7 +100,7 @@ class Pane
     linebar = 'q' * (width - 1)
     fillerbar = ' ' * (width - 1)
 
-    @display.linedrawing = true
+    @display.driver.linedrawing = true
     print @display.color('0;2')
     
     @display.place y1, x1, "n#{linebar}n"
@@ -112,7 +112,7 @@ class Pane
       @display.place row, x1, "x#{fillerbar}x"
     end
     
-    @display.linedrawing = false
+    @display.driver.linedrawing = false
     print @display.color('0')
   end
 

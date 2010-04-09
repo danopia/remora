@@ -4,7 +4,7 @@ begin
   display = Remora::UI::Display.new nil
 
   trap 'INT' do
-    display.undo_modes
+    display.close
     exit
   end
 
@@ -90,7 +90,7 @@ begin
   display.handle while sleep 0.01
 
 rescue => ex
-  display.undo_modes
+  display.close
   puts ex.class, ex.message, ex.backtrace
   exit
 end

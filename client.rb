@@ -117,7 +117,7 @@ class Client
   end
   
   def play song
-    print "\e]2;#{song}\007" # terminal title
+    @display.driver.set_title
     
     @display.panes[:np].controls[:song_name].text = song.to_s
     @display.panes[:np].controls[:cue].value = 0
