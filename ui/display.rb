@@ -23,8 +23,12 @@ class Display
   end
   
   def place row, col, text
-    print "\e[#{row.to_i};#{col.to_i}H#{text}"
+    text.each_line do |line|
+      print "\e[#{row.to_i};#{col.to_i}H#{line}"
+      row += 1
+    end
   end
+  
   def color codes
     "\e[#{codes}m"
   end
