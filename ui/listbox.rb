@@ -77,7 +77,7 @@ class ListBox < Control
   end
   
   def redraw
-    @display.cursor = false if @display.active_control == self
+    @display.driver.cursor = false if @display.active_control == self
     
     row = y1
     return unless data

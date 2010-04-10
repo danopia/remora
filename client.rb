@@ -117,7 +117,7 @@ class Client
   end
   
   def play song
-    @display.driver.set_title
+    @display.driver.set_title song.to_s
     
     @display.panes[:np].controls[:song_name].text = song.to_s
     @display.panes[:np].controls[:cue].value = 0
