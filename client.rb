@@ -14,7 +14,9 @@ class Client
   
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'
   CLIENT = 'gslite'
-  CLIENT_REV = '20100211.21'
+  CLIENT_REV = '20100412.09'
+  
+  # "country":{"CC1":"0","CC3":"0","ID":"223","CC2":"0","CC4":"1073741824"}
   
   COWBELL = 'cowbell.grooveshark.com'
   
@@ -40,6 +42,7 @@ class Client
         'uuid' => UUID,
         'client' => CLIENT,
         'clientRevision' => CLIENT_REV,
+        'country' => {"CC1"=>"0","CC3"=>"0","ID"=>"223","CC2"=>"0","CC4"=>"1073741824"},
       },
       'method' => method,
       'parameters' => parameters,
@@ -58,6 +61,7 @@ class Client
     return data['result'] unless data['fault']
     
     if data['fault']['code'] == 256
+      p data
       $sock.puts "Getting new token" if $sock
       get_comm_token
       sleep 1
@@ -97,7 +101,7 @@ class Client
   # shhhhhhh!
   def create_token method
     rnd = rand(256**3).to_s(16).rjust(6, '0')
-    plain = [method, @comm_token, 'theColorIsRed', rnd].join(':')
+    plain = [method, @comm_token, 'quitStealinMahShit', rnd].join(':')
     hash = Digest::SHA1.hexdigest plain
     "#{rnd}#{hash}"
   end
@@ -112,8 +116,13 @@ class Client
   
   # streamKey, streamServer, streamServerID
   def get_stream_auth song
-    results = request_more 'getStreamKeyFromSongID', {"songID" => song.id, "prefetch" => false}
-    results['result']
+    results = request_more 'getStreamKeyFromSongIDEx', {
+      "songID" => song.id,
+      "prefetch" => false,
+      'mobile' => false,
+      'country' => {"CC1"=>"0","CC3"=>"0","ID"=>"223","CC2"=>"0","CC4"=>"1073741824"},
+    }
+    results#['result']
   end
   
   def play song
@@ -128,7 +137,8 @@ class Client
     
     @now_playing = song
     key = get_stream_auth song
-    MPlayer.stream key['streamServer'], key['streamKey'], self
+    # {"uSecs":"273000000","FileToken":"1Uz0O8","streamKey":"9b90e6f64695493ca930","streamServerID":16384,"ip":"stream36akm.grooveshark.com"}
+    MPlayer.stream key['ip'], key['streamKey'], self
     @now_playing = nil
     @player = nil
   end
