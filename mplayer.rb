@@ -33,6 +33,8 @@ class MPlayer
     @client = client
     @client.player = self
     @paused = false
+    
+    @process.puts "volume #{@client.volume} 1"
   end
   
   def pause

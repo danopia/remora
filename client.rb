@@ -10,7 +10,7 @@ module GrooveShark
 class Client
   include DRbUndumped
   attr_accessor :session, :comm_token, :queue, :now_playing, :player, :display, :use_aoss
-  attr_reader :user, :sock, :secure_sock
+  attr_reader :user, :sock, :secure_sock, :volume
   
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'
   CLIENT = 'gslite'
@@ -29,6 +29,7 @@ class Client
     get_comm_token
     @queue = create_queue
     
+    @volume = 90
     @premium = false
     @playlists = {}
     @favorites = []
@@ -141,6 +142,14 @@ class Client
     MPlayer.stream key['ip'], key['streamKey'], self
     @now_playing = nil
     @player = nil
+  end
+  
+  def volume= vol
+    @volume = vol
+    
+    if @player
+      @player.process.puts "volume #{@volume} 1"
+    end
   end
 end
 end

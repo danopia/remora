@@ -60,9 +60,16 @@ module Remora
           $sock.puts "Output disabling request"
           send_line 'ACK Not supported'
           
+        when 'setvol'
+          args[1] =~ /^"([0-9]+)"$/
+          vol = $1.to_i
+          $sock.puts "Changing volume to #{vol}"
+          @client.volume = vol
+          send_line 'OK'
+          
         when 'status'
           $sock.puts "Status request"
-          send_line 'volume: 100'
+          send_line "volume: #{@client.volume}"
           send_line 'repeat: 0'
           send_line 'random: 0'
           send_line "playlist: #{@list_version}"
