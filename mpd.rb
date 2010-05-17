@@ -28,9 +28,19 @@ module Remora
     end
     
     def time_to_s seconds
-      sec ||= 0
-      minutes = seconds.to_i/60
-      "#{minutes}:#{(seconds.to_i-(minutes*60)).to_s.rjust 2, '0'}"
+      minutes = seconds.to_i / 60
+      format('%d:%02d', minutes, (seconds.to_i-(minutes*60)))
+    end
+    
+    def send_song song
+      send_line "file: #{song.id}.mp3"
+      send_line "Time: #{song.duration}"
+      send_line "Album: #{song.album}"
+      send_line "Artist: #{song.artist}"
+      send_line "Title: #{song.title}"
+      # send_line "Track: 12"
+      send_line "Pos: #{@client.queue.songs.values.index song}"
+      send_line "Id: #{song.id}"
     end
     
     def receive_line line
@@ -79,8 +89,8 @@ module Remora
           
           if @client.now_playing && @client.player
             send_line "song: #{@client.queue.songs.values.index @client.now_playing}"
-            send_line "songid: #{@client.now_playing.data['SongID']}"
-            send_line "time: #{@client.player.position}:#{@client.now_playing.data['EstimateDuration']}"
+            send_line "songid: #{@client.now_playing.id}"
+            send_line "time: #{@client.player.position}:#{@client.now_playing.duration}"
           end
           
           #~ send_line 'bitrate: 0'
@@ -96,41 +106,18 @@ module Remora
         
         when 'currentsong'
           song = @client.now_playing
-          if song
-            send_line "file: #{song.data['SongID']}.mp3"
-            send_line "Time: #{song.data['EstimateDuration']}"
-            send_line "Album: #{song.data['AlbumName']}"
-            send_line "Artist: #{song.data['ArtistName']}"
-            send_line "Title: #{song.data['SongName']}"
-            #send_line "Track: 12"
-            send_line "Pos: #{@client.queue.songs.values.index song}"
-            send_line "Id: #{song.data['SongID']}"
-          end
+          send_song song if song
           send_line 'OK'
         
         when 'playlistinfo'
-          @client.queue.songs.values.each_with_index do |song, pos|
-            send_line "file: #{song.data['SongID']}.mp3"
-            send_line "Time: #{song.data['EstimateDuration']}"
-            send_line "Album: #{song.data['AlbumName']}"
-            send_line "Artist: #{song.data['ArtistName']}"
-            send_line "Title: #{song.data['SongName']}"
-            #send_line "Track: 12"
-            send_line "Pos: #{pos}"
-            send_line "Id: #{song.data['SongID']}"
+          @client.queue.songs.values.each do |song|
+            send_song song
           end
           send_line 'OK'
         
         when 'lsinfo'
-          @client.queue.songs.values.each_with_index do |song, pos|
-            send_line "file: #{song.data['SongID']}.mp3"
-            send_line "Time: #{song.data['EstimateDuration']}"
-            send_line "Album: #{song.data['AlbumName']}"
-            send_line "Artist: #{song.data['ArtistName']}"
-            send_line "Title: #{song.data['SongName']}"
-            #send_line "Track: 12"
-            send_line "Pos: #{pos-1}"
-            send_line "Id: #{song.data['SongID']}"
+          @client.queue.songs.values.each do |song|
+            send_song song
           end
           send_line 'OK'
           
@@ -151,33 +138,19 @@ module Remora
         when 'listallinfo'
           args[1] =~ /^"([0-9]+)\.mp3"$/
           id = $1.to_i
-          song = @client.queue.songs.values.find{|info| info['SongID'] == id }
+          song = @client.queue.songs.values.find{|info| info.id == id }
           
-          send_line "file: #{song.data['SongID']}.mp3"
-          send_line "Time: #{song.data['EstimateDuration']}"
-          send_line "Album: #{song.data['AlbumName']}"
-          send_line "Artist: #{song.data['ArtistName']}"
-          send_line "Title: #{song.data['SongName']}"
-          #send_line "Track: 12"
-          send_line "Pos: #{@client.queue.songs.values.index song}"
-          send_line "Id: #{song.data['SongID']}"
+          send_song song
           send_line 'OK'
         
         when 'plchanges'
-          @client.queue.songs.values.each_with_index do |song, pos|
-            send_line "file: #{song.data['SongID']}.mp3"
-            send_line "Time: #{song.data['EstimateDuration']}"
-            send_line "Album: #{song.data['AlbumName']}"
-            send_line "Artist: #{song.data['ArtistName']}"
-            send_line "Title: #{song.data['SongName']}"
-            #send_line "Track: 12"
-            send_line "Pos: #{pos}"
-            send_line "Id: #{song.data['SongID']}"
+          @client.queue.songs.values.each do |song|
+            send_song song
           end
           send_line 'OK'
         
         when 'list'
-          @client.queue.songs.values.map{|song| song['ArtistName'] }.uniq.each do |artist|
+          @client.queue.songs.values.map{|song| song.data.artist }.uniq.each do |artist|
             send_line "Artist: #{artist}"
           end
           send_line 'OK'
@@ -185,15 +158,8 @@ module Remora
         when 'search'
           args[1..-1].join(' ') =~ /"([^"]*)"/
           client.search_songs($1).each do |song|
-            @songs[song['SongID'].to_i] = song
-            send_line "file: #{song.data['SongID']}.mp3"
-            send_line "Time: #{song.data['EstimateDuration']}"
-            send_line "Album: #{song.data['AlbumName']}"
-            send_line "Artist: #{song.data['ArtistName']}"
-            send_line "Title: #{song.data['SongName']}"
-            #send_line "Track: 12"
-            #send_line "Pos: 11"
-            send_line "Id: #{song.data['SongID']}"
+            @songs[song.id] = song
+            send_song song
           end
           send_line 'OK'
         
@@ -211,18 +177,11 @@ module Remora
             type = 'ArtistName' if type == 'artist'
             type = 'AlbumName' if type == 'album'
             $sock.puts "Request for songs where #{type} = #{param}"
-            songs.reject! {|song| song[type] != param }
+            songs.reject! {|song| song.data[type] != param }
           end
           
           songs.each do |song|
-            send_line "file: #{song.data['SongID']}.mp3"
-            send_line "Time: #{song.data['EstimateDuration']}"
-            send_line "Album: #{song.data['AlbumName']}"
-            send_line "Artist: #{song.data['ArtistName']}"
-            send_line "Title: #{song.data['SongName']}"
-            #send_line "Track: 12"
-            #send_line "Pos: 11"
-            send_line "Id: #{song.data['SongID']}"
+            send_song send_song
           end
           send_line 'OK'
       end

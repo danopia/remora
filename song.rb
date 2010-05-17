@@ -65,8 +65,16 @@ class Song
     @data['SongName'] || @data['Name']
   end
   
+  def album
+    @data['AlbumName']
+  end
+  
+  def artist
+    @data['ArtistName']
+  end
+  
   def to_s
-    "#{title} - #{@data['ArtistName']} - #{@data['AlbumName']}"
+    [title, album, artist].join ' - '
   end
   
   def duration
