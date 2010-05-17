@@ -2,7 +2,7 @@ require 'net/http'
 
 class MPlayer
   include DRbUndumped
-  attr_reader :client, :buffer, :stream_buffer, :offset, :thread
+  attr_reader :client, :buffer, :stream_buffer, :offset, :thread, :thread2
   attr_reader :stream, :process, :state, :total_size, :streamed_size
   attr_reader :position, :position_str, :length, :length_str, :paused
   
@@ -43,10 +43,17 @@ class MPlayer
   end
   
   def stop
+    @thread2.kill rescue nil
     @process.puts 'stop'
     @client.player = nil
     close
     @client.now_playing = nil
+    
+    @client.display.panes[:np].controls[:song_name].text = 'Nothing'
+    @client.display.panes[:np].controls[:cue].value = 0
+    @client.display.panes[:np].controls[:cue2].value = 0
+    @client.display.panes[:np].controls[:position].text = ''
+    @client.display.dirty! :np
   end
   
   def close
@@ -103,6 +110,8 @@ class MPlayer
         exit
       end
     end
+    
+    @thread2 = Thread.current
     
     sleep 0.1 until @total_size && @total_size > 0
     
@@ -179,7 +188,7 @@ class MPlayer
       handle_stdout
       sleep 0.1
     end
-    close
     @state = :complete
+    close
   end
 end

@@ -62,8 +62,8 @@ class Client
     return data['result'] unless data['fault']
     
     if data['fault']['code'] == 256
-      p data
       $sock.puts "Getting new token" if $sock
+      sleep 1
       get_comm_token
       sleep 1
       return request(page, method, parameters)
