@@ -4,7 +4,14 @@ disable_dbus = ARGV.delete '--no-dbus'
 disable_drb = ARGV.delete '--no-drb'
 
 require 'drb' unless disable_drb
-require File.join(File.dirname(__FILE__), 'dbus-interface') unless disable_dbus
+
+unless disable_dbus
+  begin
+    require File.join(File.dirname(__FILE__), 'dbus-interface')
+  rescue LoadError
+    disable_dbus = true
+  end
+end
 
 if ARGV.any?
   if ARGV.delete 'nowplaying'
@@ -210,6 +217,40 @@ begin
       display[:main, :results].data = $results
       display[:main].title = "Your Favorites"
       
+      display.focus :main, :search
+      display.dirty!
+    end
+  end
+
+  display.alert :songinfo, 60, 15, 'Song Info' do
+    hide!
+    
+    control :details, Remora::UI::ListBox, 3, 2, -3, -4
+    
+    control :queue, Remora::UI::Button, 20, -2, 30, -2 do
+      self.text = 'Queue'
+      self.alignment = :center
+      
+      on_submit do
+        display[:songinfo].hide!
+        display.dirty!
+        
+        #~ $results = client.user.favorites
+        #~ display[:main, :results].data = $results
+        #~ display[:main].title = "Your Favorites"
+        
+        display.focus :main, :search
+        display.dirty!
+      end
+    end
+    
+    control :close, Remora::UI::Button, 31, -2, 41, -2 do
+      self.text = 'Close'
+      self.alignment = :center
+    end
+      
+    on_submit do
+      display[:songinfo].hide!
       display.focus :main, :search
       display.dirty!
     end
