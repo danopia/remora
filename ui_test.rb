@@ -1,7 +1,8 @@
-require File.join(File.dirname(__FILE__), 'ui')
+require 'rubygems'
+require 'luck'
 
 begin
-  display = Remora::UI::Display.new nil
+  display = Luck::Display.new nil
 
   trap 'INT' do
     display.close
@@ -9,7 +10,7 @@ begin
   end
 
   display.pane :queue, 1, 1, 20, -1, 'Queue' do
-    control :songs, Remora::UI::ListBox, 1, 1, -1, -1 do
+    control :songs, Luck::ListBox, 1, 1, -1, -1 do
       data << 'Hello!'
       data << 'This is a listbox.'
       data << 'This is a very long entry.'
@@ -21,11 +22,11 @@ begin
   end
 
   display.pane :main, 20, 1, -1, -5, 'Search results' do
-    control :search, Remora::UI::CommandBox, 2, 1, -2, 1 do
+    control :search, Luck::CommandBox, 2, 1, -2, 1 do
       self.label = 'Search'
       self.text = ''
     end
-    control :results, Remora::UI::ListBox, 1, 2, -1, -1 do
+    control :results, Luck::ListBox, 1, 2, -1, -1 do
       number!
       
       data << 'Song 1 - Artist 1 - Album 1'
@@ -46,34 +47,34 @@ begin
   end
 
   display.pane :np, 20, -5, -1, -1, 'Now playing' do
-    control :cue, Remora::UI::DoubleProgressBar, 2, 2, -2, 3 do
+    control :cue, Luck::DoubleProgressBar, 2, 2, -2, 3 do
       template '==>->  '
       self.value = 0.7
       self.value2 = 0.2
     end
-    control :song_name, Remora::UI::Label, 1, 1, -1, 1 do
+    control :song_name, Luck::Label, 1, 1, -1, 1 do
       align :center
       self.text = 'Song - Artist - Album'
     end
   end
 
   display.modal = display.alert :login, 30, 8, 'Login to Grooveshark' do
-    control :user, Remora::UI::TextBox, 3, 2, -3, 2 do
+    control :user, Luck::TextBox, 3, 2, -3, 2 do
       self.label = 'Username'
       self.text = ''
       
       focus!
     end
-    control :pass, Remora::UI::TextBox, 3, 4, -3, 4 do
+    control :pass, Luck::TextBox, 3, 4, -3, 4 do
       self.label = 'Password'
       self.text = ''
       self.mask = '*'
     end
-    control :submit, Remora::UI::Button, 5, 6, 14, 6 do
+    control :submit, Luck::Button, 5, 6, 14, 6 do
       self.text = 'Login'
       self.alignment = :center
     end
-    control :cancel, Remora::UI::Button, 15, 6, 25, 6 do
+    control :cancel, Luck::Button, 15, 6, 25, 6 do
       self.text = 'Cancel'
       self.alignment = :center
     end
