@@ -51,7 +51,7 @@ class MPlayer
     
     @client.display.panes[:np].controls[:song_name].text = 'Nothing'
     @client.display.panes[:np].controls[:cue].value = 0
-    @client.display.panes[:np].controls[:cue2].value = 0
+    @client.display.panes[:np].controls[:cue].value2 = 0
     @client.display.panes[:np].controls[:position].text = ''
     @client.display.dirty! :np
   end

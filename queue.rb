@@ -80,8 +80,9 @@ class Queue
     @songs[index]
   end
 
-  def play_radio
-    @played = []
+  def play_radio startIndex=0
+    @played = @songs.keys[0, startIndex]
+    
     loop {
       toplay = (@songs.keys - @played).first
       if toplay

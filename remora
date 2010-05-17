@@ -78,13 +78,30 @@ begin
     control :songs, Luck::ListBox, 1, 1, -1, -1 do
       number!
       
-      on_submit do |list, song| # TODO: Song is a String here, of just the title
-        next unless song.is_a? GrooveShark::Song
+      on_submit do |list, title| # TODO: Song is a String here, of just the title
+        index = list.data.index(title)
+        song = client.queue[index]
+    
+        if client.now_playing
+          client.player.stop
+        end
         
-        pane = Remora::SongInfoPane.new(display, song)
-        display.pane :songinfo, pane
-        display.modal = pane
-        display[:songinfo, :close].focus!
+        Thread.new do
+          begin
+            client.queue.play_radio index
+          rescue => ex
+            display.close
+            puts ex.class, ex.message, ex.backtrace
+            exit
+          end
+        end
+      
+        #~ next unless song.is_a? GrooveShark::Song
+        #~ 
+        #~ pane = Remora::SongInfoPane.new(display, song)
+        #~ display.pane :songinfo, pane
+        #~ display.modal = pane
+        #~ display[:songinfo, :close].focus!
       end
     end
   end
