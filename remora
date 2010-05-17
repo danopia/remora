@@ -77,6 +77,15 @@ begin
   display.pane :queue, 1, 1, 20, -15, 'Queue' do
     control :songs, Luck::ListBox, 1, 1, -1, -1 do
       number!
+      
+      on_submit do |list, song|
+        next unless song.is_a? GrooveShark::Song
+        
+        pane = Remora::SongInfoPane.new(display, song)
+        display.pane :songinfo, pane
+        display.modal = pane
+        display[:songinfo, :close].focus!
+      end
     end
   end
   
@@ -160,6 +169,16 @@ begin
           end
         end
       end
+    elsif query =~ /^\/info ([0-9]+)$/ && $results
+      index = $1.to_i - 1
+      next if index < 0 || index > $results.size
+      
+      song = $results[index]
+      
+      pane = Remora::SongInfoPane.new(display, song)
+      display.pane :songinfo, pane
+      display.modal = pane
+      display[:songinfo, :close].focus!
     elsif query == '/pause'
       client.player && client.player.pause
     elsif query == '/stop'

@@ -1,7 +1,9 @@
 module Remora
 class SongInfoPane < Luck::Alert
-  def initialize display
-    super display, 60, 15, 'Song Info'
+  attr_reader :song
+  
+  def initialize display, song=nil
+    super display, 60, 16, 'Song Info'
     
     hide!
     
@@ -12,13 +14,22 @@ class SongInfoPane < Luck::Alert
       self.alignment = :center
       
       on_submit do
-        display[:songinfo].hide!
-        display.dirty!
+        display.client.queue << song
         
-        #~ $results = client.user.favorites
-        #~ display[:main, :results].data = $results
-        #~ display[:main].title = "Your Favorites"
+        unless display.client.now_playing
+          Thread.new do
+            begin
+              display.client.queue.play_radio
+            rescue => ex
+              display.close
+              puts ex.class, ex.message, ex.backtrace
+              exit
+            end
+          end
+        end
         
+        display.panes.delete :songinfo
+        display.modal = nil
         display.focus :main, :search
         display.dirty!
       end
@@ -30,10 +41,38 @@ class SongInfoPane < Luck::Alert
     end
       
     on_submit do
-      display[:songinfo].hide!
+      display.panes.delete :songinfo
+      display.modal = nil
       display.focus :main, :search
       display.dirty!
     end
+    
+    self.song = song if song
+  end
+  
+  def song= song
+    @song = song
+    
+    list = controls[:details].data = []
+    
+    list << "Title: #{song.title}"
+    list << "Album: #{song.album}"
+    list << "Artist: #{song.artist}"
+    
+    list << ''
+    
+    minutes = song.duration.to_i / 60
+    seconds = song.duration.to_i - minutes*60
+    list << "Length: #{format '%d:%02d', minutes, seconds.to_i}"
+    
+    list << "Track: #{song.data['TrackNum']}"
+    list << "Year: #{song.data['Year']}"
+    
+    list << ''
+    
+    list << "Song plays: #{song.data['SongPlays']}"
+    list << "Artist plays: #{song.data['ArtistPlays']}"
+    list << "Popularity: #{song.data['Popularity']}"
   end
 end
 end
