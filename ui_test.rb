@@ -1,6 +1,9 @@
 require 'rubygems'
 require 'luck'
 
+require File.join(File.dirname(__FILE__), 'panes', 'login')
+require File.join(File.dirname(__FILE__), 'panes', 'songinfo')
+
 begin
   display = Luck::Display.new nil
 
@@ -58,35 +61,10 @@ begin
     end
   end
 
-  display.modal = display.alert :login, 30, 8, 'Login to Grooveshark' do
-    control :user, Luck::TextBox, 3, 2, -3, 2 do
-      self.label = 'Username'
-      self.text = ''
-      
-      focus!
-    end
-    control :pass, Luck::TextBox, 3, 4, -3, 4 do
-      self.label = 'Password'
-      self.text = ''
-      self.mask = '*'
-    end
-    control :submit, Luck::Button, 5, 6, 14, 6 do
-      self.text = 'Login'
-      self.alignment = :center
-    end
-    control :cancel, Luck::Button, 15, 6, 25, 6 do
-      self.text = 'Cancel'
-      self.alignment = :center
-    end
-      
-    on_submit do
-      yank_values
-      display[:login].hide!
-      display.modal = nil
-      display.focus :main, :search
-      display.dirty!
-    end
-  end
+  pane = Remora::LoginPane.new(display)
+  display.pane :login, pane
+  display.modal = pane
+  display.focus :login, :user
 
   display.handle while sleep 0.01
 

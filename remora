@@ -41,6 +41,9 @@ require File.join(File.dirname(__FILE__), 'playlist')
 require File.join(File.dirname(__FILE__), 'song')
 require File.join(File.dirname(__FILE__), 'mplayer')
 
+require File.join(File.dirname(__FILE__), 'panes', 'login')
+require File.join(File.dirname(__FILE__), 'panes', 'songinfo')
+
 client = GrooveShark::Client.new
 $session = client.session
 
@@ -178,85 +181,8 @@ begin
     end
   end
 
-  display.alert :login, 30, 8, 'Login to Grooveshark' do
-    hide!
-    
-    control :user, Luck::TextBox, 3, 2, -3, 2 do
-      self.label = 'Username'
-      self.text = ''
-    end
-    control :pass, Luck::TextBox, 3, 4, -3, 4 do
-      self.label = 'Password'
-      self.text = ''
-      self.mask = '*'
-    end
-    
-    control :submit, Luck::Button, 5, 6, 14, 6 do
-      self.text = 'Login'
-      self.alignment = :center
-    end
-    control :cancel, Luck::Button, 15, 6, 25, 6 do
-      self.text = 'Cancel'
-      self.alignment = :center
-      
-      on_submit do
-        display[:login].yank_values # clear the boxes
-        display[:login].hide!
-        display.focus :main, :search
-        display.dirty!
-      end
-    end
-      
-    on_submit do
-      creds = yank_values
-      
-      display[:login].hide!
-      display.dirty!
-      
-      client.login creds[:user], creds[:pass]
-      
-      $results = client.user.favorites
-      display[:main, :results].data = $results
-      display[:main].title = "Your Favorites"
-      
-      display.focus :main, :search
-      display.dirty!
-    end
-  end
-
-  display.alert :songinfo, 60, 15, 'Song Info' do
-    hide!
-    
-    control :details, Luck::ListBox, 3, 2, -3, -4
-    
-    control :queue, Luck::Button, 20, -2, 30, -2 do
-      self.text = 'Queue'
-      self.alignment = :center
-      
-      on_submit do
-        display[:songinfo].hide!
-        display.dirty!
-        
-        #~ $results = client.user.favorites
-        #~ display[:main, :results].data = $results
-        #~ display[:main].title = "Your Favorites"
-        
-        display.focus :main, :search
-        display.dirty!
-      end
-    end
-    
-    control :close, Luck::Button, 31, -2, 41, -2 do
-      self.text = 'Close'
-      self.alignment = :center
-    end
-      
-    on_submit do
-      display[:songinfo].hide!
-      display.focus :main, :search
-      display.dirty!
-    end
-  end
+  display.pane :login, Remora::LoginPane.new(display)
+  #display.pane :songinfo, Remora::SongInfoPane.new(display)
 
   display.handle while sleep 0.01
 
