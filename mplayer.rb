@@ -98,7 +98,7 @@ class MPlayer
         stream_from_http http, req
         @state = :playing
       rescue => ex
-        $display.undo_modes
+        $display.close
         puts ex.class, ex.message, ex.backtrace
         exit
       end
@@ -119,7 +119,7 @@ class MPlayer
     wait_for_exit
     
   rescue IOError, Errno::EPIPE => ex
-    $display.undo_modes
+    $display.close
     puts ex.class, ex.message, ex.backtrace
     close rescue nil
     exit
@@ -167,7 +167,7 @@ class MPlayer
       end
     end
   rescue => ex
-    $display.undo_modes
+    $display.close
     puts ex.class, ex.message, ex.backtrace
     exit
   end
