@@ -6,10 +6,10 @@ most notable reason that it doesn't use the API is so that it can access
 streams. Remora runs purely in a console and uses mplayer to play the
 Grooveshark streams.
 
-Because Remora pipes the stream directly into Mplayer via a stdin, it
-has a chance of working under Windows, provided that you have installed
-Ruby and MPlayer. This is also better than using a temporary file on the
-hard disk because Remora will never store any song to disk.
+Because Remora uses a FIFO file to pipe the stream into Mplayer, it has
+no chance of working under Windows. This is done instead of using a
+temporary file on the hard disk because Remora will never store any
+art of any song to disk.
 
 Installation / Usage
 --------------------
