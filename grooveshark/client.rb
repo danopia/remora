@@ -11,30 +11,30 @@ class Client
   include DRbUndumped
   attr_accessor :session, :comm_token, :queue, :now_playing, :player, :display, :use_aoss
   attr_reader :user, :sock, :secure_sock, :volume
-  
+
   UUID = '996A915E-4C56-6BE2-C59F-96865F748EAE'
   CLIENT = 'gslite'
   CLIENT_REV = '20100412.09'
-  
+
   # "country":{"CC1":"0","CC3":"0","ID":"223","CC2":"0","CC4":"1073741824"}
-  
+
   COWBELL = 'cowbell.grooveshark.com'
-  
+
   def initialize session=nil
     @session = session || get_session
-    
+
     @sock = JSONSock.new "http://#{COWBELL}/", @session
     @secure_sock = JSONSock.new "https://#{COWBELL}/", @session
-    
+
     get_comm_token
     @queue = create_queue
-    
+
     @volume = 90
     @premium = false
     @playlists = {}
     @favorites = []
   end
-  
+
   def request page, method, parameters=nil, secure=false
     url = "/#{page}.php?#{method}"
     request = {
@@ -49,18 +49,18 @@ class Client
       'parameters' => parameters,
     }
     request['header']['token'] = create_token(method) if @comm_token
-    
+
     if secure
       data = @secure_sock.post url, request
     else
       data = @sock.post url, request
     end
-    
+
     # maybe they have a use :P
     puts "Have #{data['header']['alerts'].size} alerts" if data['header'] && data['header']['alerts'] && data['header']['alerts'].size != 2
-    
+
     return data['result'] unless data['fault']
-    
+
     if data['fault']['code'] == 256
       $sock.puts "Getting new token" if $sock
       sleep 1
@@ -68,10 +68,10 @@ class Client
       sleep 1
       return request(page, method, parameters)
     end
-    
+
     raise "Grooveshark returned fault code #{data['fault']['code']}: #{data['fault']['message']}"
   end
-  
+
   # These refer to the two different pages that cowbell uses.
   def request_service *params
     request 'service', *params
@@ -79,26 +79,26 @@ class Client
   def request_more *params
     request 'more', *params
   end
-  
+
   def get_session
     page = open('http://listen.grooveshark.com/').read
     page =~ /sessionID: '([0-9a-f]+)'/
     $1
   end
-  
+
   def create_queue
     Queue.new self
   end
-  
+
   def login user, pass
     @user = User.login self, user, pass
   end
-  
+
   def get_comm_token
     @comm_token = nil # so that it doesn't send a token
     @comm_token = request_service 'getCommunicationToken', {:secretKey => Digest::MD5.hexdigest(@session)}, true
   end
-  
+
   # shhhhhhh!
   def create_token method
     rnd = rand(256**3).to_s(16).rjust(6, '0')
@@ -106,7 +106,7 @@ class Client
     hash = Digest::SHA1.hexdigest plain
     "#{rnd}#{hash}"
   end
-  
+
   def search type, query
     results = request_more 'getSearchResults', {:type => type, :query => query}
     results.map {|song| Song.new song }
@@ -114,7 +114,7 @@ class Client
   def search_songs query
     search 'Songs', query
   end
-  
+
   # streamKey, streamServer, streamServerID
   def get_stream_auth song
     results = request_more 'getStreamKeyFromSongIDEx', {
@@ -125,17 +125,17 @@ class Client
     }
     results#['result']
   end
-  
+
   def play song
     @display.driver.set_title song.to_s
-    
+
     @display.panes[:np].controls[:song_name].text = song.to_s
     @display.panes[:np].controls[:cue].value = 0
     @display.panes[:np].controls[:cue].maximum = 1
     @display.panes[:np].controls[:cue].value2 = 0
     @display.panes[:np].controls[:cue].maximum2 = song.duration
     @display.dirty! :np
-    
+
     @now_playing = song
     key = get_stream_auth song
     # {"uSecs":"273000000","FileToken":"1Uz0O8","streamKey":"9b90e6f64695493ca930","streamServerID":16384,"ip":"stream36akm.grooveshark.com"}
@@ -143,13 +143,14 @@ class Client
     @now_playing = nil
     @player = nil
   end
-  
+
   def volume= vol
     @volume = vol
-    
+
     if @player
       @player.process.puts "volume #{@volume} 1"
     end
   end
 end
 end
+

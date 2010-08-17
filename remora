@@ -39,10 +39,10 @@ end
 require 'rubygems'
 require 'luck'
 
-require File.join(File.dirname(__FILE__), 'client')
-require File.join(File.dirname(__FILE__), 'user')
-require File.join(File.dirname(__FILE__), 'playlist')
-require File.join(File.dirname(__FILE__), 'song')
+require File.join(File.dirname(__FILE__), 'grooveshark', 'client')
+require File.join(File.dirname(__FILE__), 'grooveshark', 'user')
+require File.join(File.dirname(__FILE__), 'grooveshark', 'playlist')
+require File.join(File.dirname(__FILE__), 'grooveshark', 'song')
 require File.join(File.dirname(__FILE__), 'mplayer')
 
 require File.join(File.dirname(__FILE__), 'panes', 'login')
