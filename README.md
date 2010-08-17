@@ -9,10 +9,10 @@ Grooveshark streams.
 Because Remora uses a FIFO file to pipe the stream into Mplayer, it has
 no chance of working under Windows. This is done instead of using a
 temporary file on the hard disk because Remora will never store any
-art of any song to disk.
+part of any song to disk.
 
-Installation / Usage
---------------------
+Installation
+------------
 
 1. Clone the git repository
 
@@ -34,7 +34,31 @@ Installation / Usage
 
     $ ./remora
 
+Usage
+-----
+Remora's Text UI is designed to be used like a normal GUI, including even mouse support (if using an xterm-compliant terminal emulator). When you run it, a connection to Grooveshark is acquired, which will impact the load time. The TUI is laid out in multiple panes: the left side is at a fixed width and includes the queue and a temporary thread list, while the right side is fluid and includes the main pane and the mplayer output. The main pane typically lists search results.
 
+To find and queue a song, simply type in the search terms (i.e. song name) and hit enter. There are various ways to queue a song:
+
+1. Click a song in the list and hit enter
+2. Tab to the song list, use the arrow keys to select a song, and hit enter
+3. Double-click a song (TODO: is this implemented?)
+4. Type in the number of the result you want and hit enter
+
+The song will automatically play. Don't forget to tab back to the search bar (or click it) before typing in another search!
+
+If Remora hits the end of the queue before more songs are added, then it uses Grooveshark's radio feature and picks a new song based on the last 5 in the queue.
+
+### More actions
+When the list of results are being shown, use the `/info` command, followed by a number, to show a dialog with more info on a certain song.
+
+To change songs, doubleclick the song you want to skip to in the queue. Note that this is currently not available without a mouse. You will need to click the main pane in order to use that again. (Soon tab will hopefully be able to cross between panes)
+
+`/pause` toggles play/pause and `/stop` halts the queue. In order to resume playing after using `/stop`, you can either doubleclick a song in the queue, or when you don't have a mouse, queue a new song, and the queue will start over from the top.
+
+`/login` displays a dialog allowing you to log in with your existing Grooveshark account. Doing so only has one advantage: after you log in, the search results will temporarily be replaced by your favorited songs.
+
+`/player <command>` sends a raw line to the slave-mode mplayer instance. You can use this to get info out of the media stream (it will appear in the mplayer output pane) or to do strange and funky things, such as slow down the song's playback.
 Legal
 -----
 Unfortunately, the public API no longer provides stream access. Remora
