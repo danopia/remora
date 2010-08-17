@@ -11,6 +11,28 @@ has a chance of working under Windows, provided that you have installed
 Ruby and MPlayer. This is also better than using a temporary file on the
 hard disk because Remora will never store any song to disk.
 
+Installation / Usage
+--------------------
+
+1. Clone the git repository
+
+    $ git clone http://github.com/danopia/remora.git
+
+    $ cd remora/
+
+2. Install bundler
+
+    $ sudo gem install bundler
+
+3. Install bundled gem dependencies
+
+    $ bundle install
+
+4. Start remora
+
+    $ ./remora
+
+
 Legal
 -----
 Unfortunately, the public API no longer provides stream access. Remora
@@ -34,3 +56,4 @@ below attempt at legalese.
 THIS APPLICATION DOES NOT COME WITH ANY WARRANT WHATSOEVER. This application IS NOT to be used for downloading copyrighted works. ANY CHANGES TO THE SOURCE CODE BY THE END-USER MAY CAUSE LEGAL VIOLATIONS! THIS APPLICATION IS STRICTLY MEANT TO PROVIDE AN ALTERNATIVE TO THE FLASH CLIENT. This application may be illegal in some countries. If you are unsure, please contact your lawyer for legal advice. NEITHER THE AUTHOR OR ANY OTHER PARTY RELATED TO THIS APPLICATION IS RESPONSIBLE FOR YOUR MISUSE AND/OR ILLEGAL USAGE! Remora is not associated with Grooveshark, EMG, Escape Media Group, Inc, any of their partners, SharkByte, GitHub, RIAA, or grooveshark.com in any way.
 
 YOU EXPRESSLY ACKNOWLEDGE THAT YOU HAVE READ THIS AGREEMENT AND UNDERSTAND THE RIGHTS, OBLIGATIONS, TERMS AND CONDITIONS SET FORTH HEREIN. BY CONTINUING TO DOWNLOAD THIS SOFTWARE, YOU EXPRESSLY CONSENT TO BE BOUND BY ITS TERMS AND CONDITIONS.
+
