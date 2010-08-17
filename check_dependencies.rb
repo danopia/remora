@@ -7,7 +7,7 @@ puts "=== Checking that your system has the required packages and gems installed
 begin
   require 'bundler'
   puts "===== Bundler is installed."
-rescue Exception => e
+rescue LoadError
   puts "==!!! Please install gem 'bundler'   ====> $ sudo gem install bundler"
 end
 
