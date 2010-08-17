@@ -78,7 +78,7 @@ begin
     display.dirty! :login
   end
 
-  display.pane :queue, 1, 1, 20, -15, 'Queue' do
+  display.pane :queue, 1, 1, 27, -15, 'Queue' do
     control :songs, Luck::ListBox, 1, 1, -1, -1 do
       number!
 
@@ -110,7 +110,7 @@ begin
     end
   end
 
-  display.pane :threads, 1, -15, 20, -1, 'Threads' do
+  display.pane :threads, 1, -15, 27, -1, 'Threads' do
     control :list, Luck::ListBox, 1, 1, -1, -1 do
       number!
     end
@@ -124,7 +124,7 @@ begin
     }
   }
 
-  display.pane :main, 20, 1, -1, -15, 'Search results' do
+  display.pane :main, 27, 1, -1, -15, 'Search results' do
     control :search, Luck::CommandBox, 2, 1, -2, 1 do
       self.label = 'Search'
       self.text = ''
@@ -136,11 +136,11 @@ begin
     end
   end
 
-  display.pane :log, 20, -15, -1, -5, 'MPlayer Output' do
+  display.pane :log, 27, -15, -1, -5, 'MPlayer Output' do
     control :output, Luck::ListBox, 2, 1, -2, -1
   end
 
-  display.pane :np, 20, -5, -1, -1, 'Now playing' do
+  display.pane :np, 27, -5, -1, -1, 'Now playing' do
     control :song_name, Luck::Label, 1, 1, -1, 1 do
       align :center
     end
