@@ -20,9 +20,11 @@ Installation / Usage
 
     $ cd remora/
 
-2. Install bundler
+2. Check that your system has the required packages and gems
 
-    $ sudo gem install bundler
+    $ ./check_dependencies.rb
+
+    =>  Install dependencies if they are missing
 
 3. Install bundled gem dependencies
 
