@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require 'rubygems'
 require 'luck'
 
@@ -31,7 +33,7 @@ begin
     end
     control :results, Luck::ListBox, 1, 2, -1, -1 do
       number!
-      
+
       data << 'Song 1 - Artist 1 - Album 1'
       data << 'Song 2 - Artist 2 - Album 2'
       data << 'Another song by another artist'
@@ -73,3 +75,4 @@ rescue => ex
   puts ex.class, ex.message, ex.backtrace
   exit
 end
+
