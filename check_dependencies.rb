@@ -12,10 +12,18 @@ rescue LoadError
 end
 
 # Check that mplayer is installed
-apt_search = `aptitude search mplayer`
-if apt_search[/^(i [A ] mplayer)/, 1]
+
+def has_mplayer
+  ENV['PATH'].split(':').each {|f| 
+    return true if File.exists?("#{f}/mplayer")
+  }
+  return false
+end
+if has_mplayer
   puts "===== mplayer is installed."
 else
-  puts "==!!! Please install package 'mplayer'   ====> $ sudo apt-get install mplayer"
+  puts "==!!! Please install package 'mplayer'   ====> Debian/Ubuntu: $ sudo apt-get install mplayer"
+  puts "==!!!                                    ====> Arch: $ sudo pacman -S mplayer "
+
 end
 
